@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>Bilancio Personale Multitab</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 900px; margin: 20px auto; background: #f7f7f7;}
+    body { font-family: Arial, sans-serif; max-width: 1000px; margin: 20px auto; background: #f7f7f7;}
     h1 { text-align: center; }
     nav { margin: 20px 0; }
     nav button { padding:10px 25px;margin-right:5px;font-size:1.1em;border:none;border-radius:6px;cursor:pointer;}
@@ -15,7 +15,12 @@
     th, td { border:1px solid #ddd; padding:4px; }
     th { background:#eee; }
     label { margin-top: 8px; font-weight: bold; display:block; }
-    select, input, button { width: 100%; padding: 10px; margin: 8px 0; }
+    select, input, button { width: 100%; padding: 10px; margin: 8px 0;}
+    .saldo-row { display:flex; gap:25px; margin-bottom:12px; }
+    .saldo-box { background:#e3e3e3; border-radius:7px; padding:14px; min-width:140px; font-size:1.2em; text-align:center;}
+    .add-btn { background: #33c16c; color: #fff; border: none; border-radius: 8px; font-size: 1em; cursor: pointer; padding:7px 30px;}
+    .del-btn { background: #c13333; color:#fff; border:none; border-radius:8px; font-size:1em; cursor:pointer; padding:5px 15px;}
+    #budgetCopy { white-space:pre-line; font-family:monospace; background:#f7f7f7; padding:14px; border-radius:7px;} 
   </style>
 </head>
 <body>
@@ -25,7 +30,20 @@
     <button id="btnDettaglio">Dettaglio Spese</button>
     <button id="btnBudget">Budget</button>
     <button id="btnCategorie">Categorie</button>
+    <button id="btnSaldo">Saldo</button>
   </nav>
+
+  <!-- SALDO -->
+  <section id="tabSaldo">
+    <h2>Saldo conti</h2>
+    <div class="saldo-row">
+      <div class="saldo-box" id="saldoContanti">Contanti: €0.00</div>
+      <div class="saldo-box" id="saldoRevolut">Revolut: €0.00</div>
+      <div class="saldo-box" id="saldoUnicredit">Unicredit: €0.00</div>
+      <div class="saldo-box" id="saldoIsybank">Isybank: €0.00</div>
+      <div class="saldo-box" style="background:#339cff; color:#fff" id="saldoTotale">Totale: €0.00</div>
+    </div>
+  </section>
 
   <!-- Input movimento -->
   <section id="tabInput" class="active">
@@ -35,6 +53,13 @@
       <select id="tipo" required>
         <option value="Uscita" selected>Uscita</option>
         <option value="Entrata">Entrata</option>
+      </select>
+      <label>Fonte</label>
+      <select id="fonte" required>
+        <option value="CONTANTI">CONTANTI</option>
+        <option value="REVOLUT">REVOLUT</option>
+        <option value="UNICREDIT">UNICREDIT</option>
+        <option value="ISYBANK">ISYBANK</option>
       </select>
       <label>Data</label>
       <input type="date" id="data" required>
@@ -55,6 +80,7 @@
       <thead>
         <tr>
           <th>Tipo</th>
+          <th>Fonte</th>
           <th>Data</th>
           <th>Mese</th>
           <th>Anno</th>
@@ -70,75 +96,85 @@
   <!-- Budget -->
   <section id="tabBudget">
     <h2>Budget</h2>
-    <div id="budgetStats"></div>
+    <div id="budgetCopy"></div>
   </section>
 
   <!-- Categorie -->
   <section id="tabCategorie">
     <h2>Categorie</h2>
+    <form id="newCatForm">
+      <label>Nuova categoria</label>
+      <input type="text" id="nuovaCat" placeholder="Nome categoria">
+      <select id="catTipo">
+        <option value="Uscita">Uscita</option>
+        <option value="Entrata">Entrata</option>
+      </select>
+      <button type="submit" class="add-btn">Aggiungi</button>
+    </form>
     <table>
       <thead>
         <tr>
           <th>Tipo</th>
           <th>Categoria</th>
-          <th>Descrizione</th>
+          <th>Azioni</th>
         </tr>
       </thead>
-      <tbody>
-        <tr><td>NECESSITÀ</td><td>TRASPORTI</td><td>treno, bus, autostrada, parcheggi</td></tr>
-        <tr><td>NECESSITÀ</td><td>AFFITTO</td><td>affitto</td></tr>
-        <tr><td>NECESSITÀ</td><td>UTENZE</td><td>acqua, energia, gas, internet, telefono</td></tr>
-        <tr><td>NECESSITÀ</td><td>SPESA E ALIMENTARI</td><td>spesa per cibo</td></tr>
-        <tr><td>NECESSITÀ</td><td>CURA PERSONALE</td><td>shampoo, rasoio, parrucchiere, dentista, fisioterapista</td></tr>
-        <tr><td>NECESSITÀ</td><td>SPESE MEDICHE</td><td>visite mediche e farmaci</td></tr>
-        <tr><td>NECESSITÀ</td><td>VESTITI ESSENZIALI</td><td>vestiti</td></tr>
-        <tr><td>NECESSITÀ</td><td>COSE DELLA CASA</td><td>mobili, elettronica, accessori casa, cucina</td></tr>
-        <tr><td>NECESSITÀ</td><td>SPESE SCOLASTICHE</td><td></td></tr>
-        <tr><td>EXTRA</td><td>RISTORANTE</td><td>mangiare fuori</td></tr>
-        <tr><td>EXTRA</td><td>VACANZA</td><td>vacanze, gite</td></tr>
-        <tr><td>EXTRA</td><td>REGALI</td><td>regali</td></tr>
-        <tr><td>EXTRA</td><td>ALTRO EXTRA</td><td></td></tr>
-        <tr><td>EXTRA</td><td>USCITE</td><td></td></tr>
-        <tr><td>EXTRA</td><td>SIGARETTE</td><td></td></tr>
-        <tr><td>ENTRATE</td><td>Lavoro</td><td></td></tr>
-        <tr><td>ENTRATE</td><td>Mamma</td><td></td></tr>
-        <tr><td>ENTRATE</td><td>Nonna</td><td></td></tr>
-        <tr><td>ENTRATE</td><td>Roxana</td><td></td></tr>
-        <tr><td>ENTRATE</td><td>Entrate extra</td><td></td></tr>
-        <tr><td>ENTRATE</td><td>Rimborsi</td><td></td></tr>
-      </tbody>
+      <tbody id="catTabBody"></tbody>
     </table>
   </section>
 
 <script>
-// Categorie
-const categories = {
+const startCategories = {
   Uscita: [
-    "TRASPORTI",
-    "AFFITTO",
-    "UTENZE",
-    "SPESA E ALIMENTARI",
-    "CURA PERSONALE",
-    "SPESE MEDICHE",
-    "VESTITI ESSENZIALI",
-    "COSE DELLA CASA",
-    "SPESE SCOLASTICHE",
-    "RISTORANTE",
-    "VACANZA",
-    "REGALI",
-    "ALTRO EXTRA",
-    "USCITE",
-    "SIGARETTE"
+    "TRASPORTI","AFFITTO","UTENZE","SPESA E ALIMENTARI","CURA PERSONALE",
+    "SPESE MEDICHE","VESTITI ESSENZIALI","COSE DELLA CASA","SPESE SCOLASTICHE",
+    "RISTORANTE","VACANZA","REGALI","ALTRO EXTRA","USCITE","SIGARETTE"
   ],
   Entrata: [
-    "Lavoro",
-    "Mamma",
-    "Nonna",
-    "Roxana",
-    "Entrate extra",
-    "Rimborsi"
+    "Lavoro","Mamma","Nonna","Roxana","Entrate extra","Rimborsi"
   ]
 };
+const contiArr = ["CONTANTI","REVOLUT","UNICREDIT","ISYBANK"];
+
+// Gestione categorie interattive
+function loadCategories() {
+  let cats = JSON.parse(localStorage.getItem('categorie') || "null");
+  return cats || JSON.parse(JSON.stringify(startCategories));
+}
+function saveCategories(cats) {
+  localStorage.setItem('categorie', JSON.stringify(cats));
+}
+function setCategoryOptions(tipo) {
+  let select = document.getElementById('categoria');
+  select.innerHTML = '<option value="">Seleziona categoria</option>';
+  loadCategories()[tipo].forEach(c => {
+    let opt = document.createElement('option');
+    opt.value = c;
+    opt.textContent = c;
+    select.appendChild(opt);
+  });
+}
+document.getElementById('tipo').addEventListener('change', function() {
+  setCategoryOptions(this.value);
+});
+
+// Gestione saldo
+function calcSaldo() {
+  let movimenti = JSON.parse(localStorage.getItem('movimenti') || "[]");
+  let saldi = {CONTANTI:0, REVOLUT:0, UNICREDIT:0, ISYBANK:0};
+  movimenti.forEach(m => {
+    if(contiArr.includes(m.fonte)){
+      if(m.tipo==="Entrata") saldi[m.fonte] += m.euro;
+      else saldi[m.fonte] -= m.euro;
+    }
+  });
+  document.getElementById('saldoContanti').innerHTML = "Contanti: €"+saldi.CONTANTI.toFixed(2);
+  document.getElementById('saldoRevolut').innerHTML = "Revolut: €"+saldi.REVOLUT.toFixed(2);
+  document.getElementById('saldoUnicredit').innerHTML = "Unicredit: €"+saldi.UNICREDIT.toFixed(2);
+  document.getElementById('saldoIsybank').innerHTML = "Isybank: €"+saldi.ISYBANK.toFixed(2);
+  let tot = saldi.CONTANTI + saldi.REVOLUT + saldi.UNICREDIT + saldi.ISYBANK;
+  document.getElementById('saldoTotale').innerHTML = "Totale: €"+tot.toFixed(2);
+}
 
 // Navigazione tab
 function showTab(tab) {
@@ -146,41 +182,30 @@ function showTab(tab) {
   document.querySelectorAll('section').forEach(sec => sec.classList.remove('active'));
   document.getElementById('btn' + tab).classList.add('active');
   document.getElementById('tab' + tab).classList.add('active');
+  if(tab==="Saldo"){ calcSaldo(); }
+  if(tab==="Dettaglio"){ loadDettaglio(); }
+  if(tab==="Budget"){ calcBudgetCopy(); }
+  if(tab==="Categorie"){ renderCategorie(); }
 }
 document.getElementById('btnInput').onclick = () => showTab('Input');
-document.getElementById('btnDettaglio').onclick = () => { showTab('Dettaglio'); loadDettaglio(); }
-document.getElementById('btnBudget').onclick = () => { showTab('Budget'); calcBudget(); }
+document.getElementById('btnDettaglio').onclick = () => showTab('Dettaglio');
+document.getElementById('btnBudget').onclick = () => showTab('Budget');
 document.getElementById('btnCategorie').onclick = () => showTab('Categorie');
+document.getElementById('btnSaldo').onclick = () => showTab('Saldo');
 
-// Imposta le categorie su base tipo Entrata/Uscita
-function setCategoryOptions(tipo) {
-  let select = document.getElementById('categoria');
-  select.innerHTML = '<option value="">Seleziona categoria</option>';
-  categories[tipo].forEach(c => {
-    let opt = document.createElement('option');
-    opt.value = c;
-    opt.textContent = c;
-    select.appendChild(opt);
-  });
-}
-
-// Aggiorna il menu categorie quando cambia tipo
-document.getElementById('tipo').addEventListener('change', function() {
-  setCategoryOptions(this.value);
-});
-
-// All’avvio, preseleziona “Uscita” e mostra le categorie corrette
+// All’avvio
 document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('data').value = new Date().toISOString().split('T')[0];
+  if(!localStorage.getItem('categorie')) saveCategories(startCategories);
   setCategoryOptions('Uscita');
-  loadDettaglio();
-  calcBudget();
+  calcSaldo(); loadDettaglio(); calcBudgetCopy(); renderCategorie();
 });
 
 // Salva nuovo movimento su localStorage
 document.getElementById('movForm').onsubmit = function(e) {
   e.preventDefault();
   let tipo = document.getElementById('tipo').value;
+  let fonte = document.getElementById('fonte').value;
   let data = document.getElementById('data').value;
   let euro = parseFloat(document.getElementById('euro').value);
   let descrizione = document.getElementById('descrizione').value;
@@ -189,15 +214,15 @@ document.getElementById('movForm').onsubmit = function(e) {
   let mese = dt.toLocaleString('it-IT', { month: 'long' });
   let anno = dt.getFullYear();
   let movimenti = JSON.parse(localStorage.getItem('movimenti') || "[]");
-  movimenti.push({tipo, data, mese, anno, euro, descrizione, categoria});
+  movimenti.push({tipo, fonte, data, mese, anno, euro, descrizione, categoria});
   localStorage.setItem('movimenti', JSON.stringify(movimenti));
   this.reset();
   document.getElementById('tipo').value = "Uscita";
   setCategoryOptions('Uscita');
+  document.getElementById('fonte').value = "CONTANTI";
   document.getElementById('data').value = new Date().toISOString().split('T')[0];
   alert("Movimento inserito!");
-  loadDettaglio();
-  calcBudget();
+  calcSaldo(); loadDettaglio(); calcBudgetCopy();
 }
 
 // Dettaglio spese
@@ -208,6 +233,7 @@ function loadDettaglio() {
   movimenti.forEach(m => {
     let row = `<tr>
       <td>${m.tipo}</td>
+      <td>${m.fonte}</td>
       <td>${m.data}</td>
       <td>${m.mese}</td>
       <td>${m.anno}</td>
@@ -219,20 +245,10 @@ function loadDettaglio() {
   });
 }
 
-// Budget tab: riepilogo base
-function calcBudget() {
-  let movimenti = JSON.parse(localStorage.getItem('movimenti') || "[]");
-  let entrateTot = movimenti.filter(m => m.tipo === "Entrata")
-    .reduce((tot, m) => tot + m.euro, 0);
-  let usciteTot = movimenti.filter(m => m.tipo === "Uscita")
-    .reduce((tot, m) => tot + m.euro, 0);
-  let balance = entrateTot - usciteTot;
-  document.getElementById('budgetStats').innerHTML = `
-    <strong>Totale entrate:</strong> €${entrateTot.toFixed(2)}<br>
-    <strong>Totale uscite:</strong> €${usciteTot.toFixed(2)}<br>
-    <strong>Saldo attuale:</strong> €${balance.toFixed(2)}
-  `;
-}
-</script>
-</body>
-</html>
+// Budget tab: copia esatta foglio Google (testo)
+function calcBudgetCopy() {
+  let mov = JSON.parse(localStorage.getItem('movimenti') || "[]");
+  let euroAnnualeNec = mov.filter(m=>["TRASPORTI","AFFITTO","UTENZE","SPESA E ALIMENTARI",
+    "CURA PERSONALE","SPESE MEDICHE","VESTITI ESSENZIALI","COSE DELLA CASA","SPESE SCOLASTICHE"].includes(m.categoria) && m.tipo==="Uscita")
+    .reduce((tot,m)=>tot+m.euro,0);
+  let euroAnnualeExtra = mov.filter(m=>["
