@@ -85,6 +85,12 @@
   </div>
 
 <script>
+// Precompila la data con oggi
+document.addEventListener('DOMContentLoaded', function() {
+  const oggi = new Date().toISOString().split('T')[0];
+  document.getElementById('dateMov').value = oggi;
+});
+
 function loadMovimenti() {
   return JSON.parse(localStorage.getItem('movimenti')) || [];
 }
@@ -158,6 +164,8 @@ document.getElementById('movForm').addEventListener('submit', function(e) {
   saveMovimenti(movimenti);
   updateTable();
   this.reset();
+  // Rimetto la data a oggi per comodità
+  document.getElementById('dateMov').value = new Date().toISOString().split('T')[0];
 });
 
 updateTable();
