@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Budget Personale: Entrate/Uscite</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 700px; margin: 20px auto; padding: 20px; background: #f7f7f7;}
+    h1 { text-align: center;}
+    input, select, button { padding: 10px; margin: 5px 0; width: 100%; box-sizing: border-box;}
+    table { width: 100%; border-collapse: collapse; margin-top: 20px;}
+    th, td { border: 1px solid #ddd; padding: 8px;}
+    th { background: #efefef;}
+    .summary { margin-top: 20px; font-weight: bold;}
+    .tab { margin-top:30px; }
+  </style>
+</head>
+<body>
+  <h1>Gestione Budget Personale</h1>
+
+  <div class="tab">
+    <h2>Aggiungi Movimento</h2>
+    <form id="movForm">
+      <label>Data</label>
+      <input type="date" id="dateMov" required>
+      <label>Tipo</label>
+      <select id="tipoMov" required>
+        <option value="">Entrata o Uscita?</option>
+        <option value="Entrata">Entrata</option>
+        <option value="Uscita">Uscita</option>
+      </select>
+      <label>Categoria</label>
+      <select id="categoriaMov" required>
+        <option value="">Seleziona categoria</option>
+        <option value="TRASPORTI">TRASPORTI (treno, bus, autostrada, parcheggi)</option>
+        <option value="AFFITTO">AFFITTO</option>
+        <option value="UTENZE">UTENZE (acqua, energia, gas, internet, telefono)</option>
+        <option value="SPESA E ALIMENTARI">SPESA E ALIMENTARI</option>
+        <option value="CURA PERSONALE">CURA PERSONALE (shampoo, parrucchiere, dentista...)</option>
+        <option value="SPESE MEDICHE">SPESE MEDICHE</option>
+        <option value="VESTITI ESSENZIALI">VESTITI ESSENZIALI</option>
+        <option value="COSE DELLA CASA">COSE DELLA CASA</option>
+        <option value="SPESE SCOLASTICHE">SPESE SCOLASTICHE</option>
+        <option value="RISTORANTE">RISTORANTE</option>
+        <option value="VACANZA">VACANZA</option>
+        <option value="REGALI">REGALI</option>
+        <option value="ALTRO EXTRA">ALTRO EXTRA</option>
+        <option value="USCITE">USCITE</option>
+        <option value="SIGARETTE">SIGARETTE</option>
+        <option value="Lavoro">Lavoro</option>
+        <option value="Mamma">Mamma</option>
+        <option value="Nonna">Nonna</option>
+        <option value="Roxana">Roxana</option>
+        <option value="Entrate extra">Entrate extra</option>
+        <option value="Rimborsi">Rimborsi</option>
+      </select>
+      <label>Descrizione</label>
+      <input type="text" id="descMov" placeholder="Descrizione">
+      <label>Importo (€)</label>
+      <input type="number" id="amountMov" step="0.01" min="0" required>
+      <button type="submit">Aggiungi Movimento</button>
+    </form>
+  </div>
+
+  <div class="tab">
+    <h2>Movimenti</h2>
+    <table id="movimentiTable">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Tipo</th>
+          <th>Categoria</th>
+          <th>Descrizione</th>
+          <th>Importo (€)</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div class="summary" id="summary"></div>
+  </div>
+
+  <div class="tab">
+    <h2>Saldo Attuale</h2>
+    <div id="saldo"></div>
+  </div>
+
+<script>
+function loadMovimenti() {
+  return JSON.parse(localStorage.getItem('movimenti')) || [];
+}
+function saveMovimenti(movimenti) {
+  localStorage.setItem('movimenti', JSON.stringify(movimenti));
+}
+
+function updateTable() {
+  let movimenti = loadMovimenti();
+  let tbody = document.querySelector('#movimentiTable tbody');
+  tbody.innerHTML = '';
+  movimenti.forEach(mov => {
+    let tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${mov.date}</td>
+      <td>${mov.tipo}</td>
+      <td>${mov.categoria}</td>
+      <td>${mov.desc}</td>
+      <td>€ ${mov.amount.toFixed(2)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+  updateSummary(movimenti);
+  updateSaldo(movimenti);
+}
+
+function updateSummary(movimenti) {
+  let summaryDiv = document.getElementById('summary');
+  if (movimenti.length === 0) {
+    summaryDiv.textContent = 'Nessun movimento inserito';
+    return;
+  }
+  let totalsEntrate = {};
+  let totalsUscite = {};
+  movimenti.forEach(mov => {
+    if (mov.tipo === "Entrata") {
+      totalsEntrate[mov.categoria] = (totalsEntrate[mov.categoria] || 0) + mov.amount;
+    } else if (mov.tipo === "Uscita") {
+      totalsUscite[mov.categoria] = (totalsUscite[mov.categoria] || 0) + mov.amount;
+    }
+  });
+  let summaryText = `<strong>Totale Entrate per categoria:</strong><br>`;
+  for (let cat in totalsEntrate) {
+    summaryText += `${cat}: € ${totalsEntrate[cat].toFixed(2)}<br>`;
+  }
+  summaryText += `<br><strong>Totale Uscite per categoria:</strong><br>`;
+  for (let cat in totalsUscite) {
+    summaryText += `${cat}: € ${totalsUscite[cat].toFixed(2)}<br>`;
+  }
+  summaryDiv.innerHTML = summaryText;
+}
+
+function updateSaldo(movimenti) {
+  let entrate = movimenti.filter(m => m.tipo === "Entrata").reduce((sum, x) => sum + x.amount, 0);
+  let uscite = movimenti.filter(m => m.tipo === "Uscita").reduce((sum, x) => sum + x.amount, 0);
+  let saldoDiv = document.getElementById('saldo');
+  saldoDiv.innerHTML = `<strong>Entrate Totali:</strong> € ${entrate.toFixed(2)}<br>
+    <strong>Uscite Totali:</strong> € ${uscite.toFixed(2)}<br>
+    <strong>Saldo attuale:</strong> € ${(entrate - uscite).toFixed(2)}`;
+}
+
+document.getElementById('movForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  let date = document.getElementById('dateMov').value;
+  let tipo = document.getElementById('tipoMov').value;
+  let categoria = document.getElementById('categoriaMov').value;
+  let desc = document.getElementById('descMov').value;
+  let amount = parseFloat(document.getElementById('amountMov').value);
+  let movimenti = loadMovimenti();
+  movimenti.push({ date, tipo, categoria, desc, amount });
+  saveMovimenti(movimenti);
+  updateTable();
+  this.reset();
+});
+
+updateTable();
+</script>
+</body>
+</html>
