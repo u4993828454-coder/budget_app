@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8" />
-  <title>Bilancio Personale Multitab Modificabile</title>
+  <title>Bilancio Personale Completo</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -14,6 +14,21 @@
     h1 {
       text-align: center;
       margin-bottom: 5px;
+    }
+
+    #saldoTotaleBar {
+      background: #339cff;
+      color: white;
+      font-weight: bold;
+      padding: 15px;
+      text-align: center;
+      border-radius: 8px;
+      margin-bottom: 18px;
+      font-size: 1.2em;
+      user-select: text;
+      position: sticky;
+      top: 0;
+      z-index: 999;
     }
 
     nav {
@@ -40,23 +55,23 @@
     }
 
     #btnInput {
-      background-color: #c92a2a; /* rosso */
+      background-color: #c92a2a;
       color: white;
     }
 
     #btnDettaglio {
-      background-color: #d9a620; /* giallo */
+      background-color: #d9a620;
       color: #222;
     }
 
     #btnBudget,
     #btnCategorie {
-      background-color: #6c757d; /* grigio */
+      background-color: #6c757d;
       color: white;
     }
 
     #btnSaldo {
-      background-color: #339cff; /* azzurro */
+      background-color: #339cff;
       color: white;
     }
 
@@ -136,14 +151,16 @@
     th,
     td {
       border: 1px solid #ddd;
-      padding: 8px;
+      padding: 6px;
       text-align: center;
-      user-select: text;
       vertical-align: middle;
+      user-select: text;
     }
 
     th {
       background-color: #eee;
+      font-weight: bold;
+      user-select: text;
     }
 
     /* Category colors */
@@ -165,7 +182,7 @@
       font-weight: bold;
     }
 
-    /* Apply colors also in table rows */
+    /* Rows colored */
     tr.essenziale td {
       background-color: #fff2f2;
       color: #a10000;
@@ -181,51 +198,19 @@
       color: #056605;
     }
 
-    /* Saldo display */
-    .saldo-row {
-      display: flex;
-      gap: 25px;
-      margin-bottom: 12px;
-      flex-wrap: wrap;
-    }
-
-    .saldo-box {
-      background: #e3e3e3;
-      border-radius: 7px;
-      padding: 14px;
-      min-width: 140px;
-      font-size: 1.2em;
-      text-align: center;
-      font-weight: bold;
-      color: #333;
-      user-select: text;
-    }
-
-    #saldoTotale {
-      background-color: #339cff;
-      color: white;
-    }
-
     /* Budget editing area */
     #budgetText {
       width: 100%;
-      height: 250px;
+      height: 280px;
       font-family: monospace;
       font-size: 14px;
       white-space: pre-wrap;
       border-radius: 6px;
       border: 1px solid #ccc;
       padding: 12px;
-      resize: vertical;
       background-color: #f7f7f7;
       user-select: text;
-    }
-
-    #budgetHeader {
-      margin-bottom: 8px;
-      font-weight: bold;
-      font-size: 0.9em;
-      color: #666;
+      resize: vertical;
     }
 
     /* Form within categories */
@@ -236,25 +221,15 @@
 </head>
 <body>
   <h1>Bilancio Personale</h1>
-  <nav>
+  <div id="saldoTotaleBar" aria-live="polite" role="region" aria-label="Saldo totale">Saldo totale: €0.00</div>
+
+  <nav aria-label="Navigazione sezioni">
     <button id="btnInput" class="active" title="Scheda di inserimento dati">Input</button>
     <button id="btnDettaglio" title="Elenco dettagliato movimenti">Dettaglio Spese</button>
     <button id="btnBudget" title="Riepilogo Budget annuale modificabile">Budget</button>
     <button id="btnCategorie" title="Gestione categorie interattiva">Categorie</button>
     <button id="btnSaldo" title="Saldo dei conti dettagliato">Saldo</button>
   </nav>
-
-  <!-- SALDO -->
-  <section id="tabSaldo" aria-label="Sezione saldo conti">
-    <h2>Saldo conti</h2>
-    <div class="saldo-row" title="Saldo aggiornato per fonte e totale">
-      <div class="saldo-box" id="saldoContanti" title="Contanti">Contanti: €0.00</div>
-      <div class="saldo-box" id="saldoRevolut" title="Revolut">Revolut: €0.00</div>
-      <div class="saldo-box" id="saldoUnicredit" title="Unicredit">Unicredit: €0.00</div>
-      <div class="saldo-box" id="saldoIsybank" title="Isybank">Isybank: €0.00</div>
-      <div class="saldo-box" id="saldoTotale" title="Saldo totale complessivo">Totale: €0.00</div>
-    </div>
-  </section>
 
   <!-- Input movimento -->
   <section id="tabInput" class="active" aria-label="Inserimento nuovo movimento">
@@ -288,7 +263,7 @@
         <!-- Popolato da JS -->
       </select>
 
-      <button type="submit" title="Aggiungi il movimento" style="background: #6c757d;color: white;">Aggiungi</button>
+      <button type="submit" title="Aggiungi il movimento">Aggiungi</button>
     </form>
   </section>
 
@@ -306,22 +281,23 @@
           <th scope="col">Euro</th>
           <th scope="col">Descrizione</th>
           <th scope="col">Categoria</th>
+          <th scope="col">Azioni</th>
         </tr>
       </thead>
       <tbody></tbody>
     </table>
-    <p id="dettaglioDescr" hidden>Tabella dei movimenti dettagliati con tipo, data, importo, descrizione e categoria</p>
+    <p id="dettaglioDescr" hidden>Tabella dei movimenti dettagliati con tipo, data, importo, descrizione e categoria. È possibile cancellare i movimenti qui.</p>
   </section>
 
   <!-- Budget -->
   <section id="tabBudget" aria-label="Budget modificabile">
     <h2>Budget</h2>
     <p id="budgetLastMod" style="font-style: italic; font-size: 0.9em; color: #666;"></p>
+    <label for="budgetMonth">Mese (es. agosto 2025):</label>
+    <input type="text" id="budgetMonth" placeholder="Es. agosto 2025" />
     <label for="budgetText">Modifica il budget qui (testo libero, ogni modifica viene salvata):</label>
     <textarea id="budgetText" aria-live="polite"></textarea>
     <button id="saveBudgetBtn" style="background:#6c757d;color:white;border:none;padding:10px 15px; border-radius:7px; cursor:pointer; margin-top:10px; font-weight:bold;">Salva Budget</button>
-    <label for="budgetMonth">Mese (es. agosto 2025):</label>
-    <input type="text" id="budgetMonth" placeholder="es. agosto 2025" />
   </section>
 
   <!-- Categorie -->
@@ -350,7 +326,6 @@
   </section>
 
 <script>
-  // Categorie iniziali
   const startCategories = {
     Uscita: [
       "TRASPORTI",
@@ -381,14 +356,9 @@
 
   const contiArr = ["CONTANTI", "REVOLUT", "UNICREDIT", "ISYBANK"];
 
-  // Navigazione schede
   function showTab(tab) {
-    document.querySelectorAll('nav button').forEach((btn) =>
-      btn.classList.remove('active')
-    );
-    document.querySelectorAll('section').forEach((sec) =>
-      sec.classList.remove('active')
-    );
+    document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('section').forEach(sec => sec.classList.remove('active'));
     document.getElementById('btn' + tab).classList.add('active');
     document.getElementById('tab' + tab).classList.add('active');
     if (tab === "Saldo") calcSaldo();
@@ -396,13 +366,13 @@
     else if (tab === "Budget") loadBudget();
     else if (tab === "Categorie") renderCategorie();
   }
+
   document.getElementById('btnInput').onclick = () => showTab('Input');
   document.getElementById('btnDettaglio').onclick = () => showTab('Dettaglio');
   document.getElementById('btnBudget').onclick = () => showTab('Budget');
   document.getElementById('btnCategorie').onclick = () => showTab('Categorie');
   document.getElementById('btnSaldo').onclick = () => showTab('Saldo');
 
-  // Gestione categorie
   function loadCategories() {
     let cats = JSON.parse(localStorage.getItem('categorie') || "null");
     return cats || JSON.parse(JSON.stringify(startCategories));
@@ -413,14 +383,16 @@
   function setCategoryOptions(tipo) {
     let select = document.getElementById('categoria');
     select.innerHTML = '<option value="">Seleziona categoria</option>';
-    loadCategories()[tipo].forEach((c) => {
+    loadCategories()[tipo].forEach(c => {
       const opt = document.createElement('option');
       opt.value = c;
       opt.textContent = c;
+      // Colori categorie come richiesto
       if (startCategories.Uscita.includes(c)) {
         opt.style.backgroundColor = "#ffe5e5"; // rosso chiaro
         opt.style.color = "#b20000";
-      } else if (startCategories.Entrata.includes(c)) {
+      }
+      if (startCategories.Entrata.includes(c)) {
         opt.style.backgroundColor = "#eaffea"; // verde
         opt.style.color = "#067e15";
       }
@@ -435,7 +407,6 @@
     setCategoryOptions(this.value);
   });
 
-  // Inizializzazioni
   document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('data').value = new Date().toISOString().split('T')[0];
     if (!localStorage.getItem('categorie')) saveCategories(startCategories);
@@ -447,17 +418,16 @@
     renderCategorie();
   });
 
-  // Salvataggio nuovo movimento con caricamento dinamico
   document.getElementById('movForm').onsubmit = function(e) {
     e.preventDefault();
     let tipo = document.getElementById('tipo').value;
     let fonte = document.getElementById('fonte').value;
     let data = document.getElementById('data').value;
     let euro = parseFloat(document.getElementById('euro').value);
-    let descrizione = document.getElementById('descrizione').value || '';
+    let descrizione = document.getElementById('descrizione').value || "";
     let categoria = document.getElementById('categoria').value;
     let dt = new Date(data);
-    let mese = dt.toLocaleString('it-IT', { month: 'long' });
+    let mese = dt.toLocaleString("it-IT", {month: "long"});
     let anno = dt.getFullYear();
 
     let movimenti = JSON.parse(localStorage.getItem('movimenti') || "[]");
@@ -475,19 +445,19 @@
     loadBudget();
   };
 
-  // Dettaglio spese con colori riga categoria
+  // Dettaglio spese con eliminazione
   function loadDettaglio() {
     let tbody = document.querySelector('#dettaglioTable tbody');
     tbody.innerHTML = "";
     let movimenti = JSON.parse(localStorage.getItem('movimenti') || "[]");
-    movimenti.forEach(m => {
+    movimenti.forEach((m, idx) => {
       let tr = document.createElement("tr");
       let classe = "";
       if (startCategories.Uscita.includes(m.categoria)) classe = 'essenziale';
-      if (startCategories.Entrata.includes(m.categoria)) classe = 'entrata';
-      if (["RISTORANTE","VACANZA","REGALI","ALTRO EXTRA","USCITE","SIGARETTE"].includes(m.categoria)) classe = "extra";
-      tr.className = classe;
+      else if (startCategories.Entrata.includes(m.categoria)) classe = 'entrata';
+      else if (["RISTORANTE","VACANZA","REGALI","ALTRO EXTRA","USCITE","SIGARETTE"].includes(m.categoria)) classe = 'extra';
 
+      tr.className = classe;
       tr.innerHTML = `
         <td>${m.tipo}</td>
         <td>${m.fonte}</td>
@@ -497,38 +467,50 @@
         <td>€ ${m.euro.toFixed(2)}</td>
         <td>${m.descrizione}</td>
         <td>${m.categoria}</td>
+        <td><button class="del-btn" aria-label="Elimina movimento" data-idx="${idx}">Elimina</button></td>
       `;
       tbody.appendChild(tr);
     });
+    // delete buttons listeners
+    tbody.querySelectorAll('.del-btn').forEach(btn => {
+      btn.onclick = function () {
+        let idx = parseInt(this.dataset.idx);
+        let movimenti = JSON.parse(localStorage.getItem('movimenti') || "[]");
+        movimenti.splice(idx, 1);
+        localStorage.setItem('movimenti', JSON.stringify(movimenti));
+        loadDettaglio();
+        calcSaldo();
+        loadBudget();
+      };
+    });
   }
 
-  // Calcolo saldo diviso per fonte + totale
+  // Saldo calcolo e visualizzazione sempre aggiornata
   function calcSaldo() {
     let movimenti = JSON.parse(localStorage.getItem('movimenti') || "[]");
-    let saldi = {CONTANTI: 0, REVOLUT: 0, UNICREDIT: 0, ISYBANK: 0};
+    let saldi = {CONTANTI:0, REVOLUT:0, UNICREDIT:0, ISYBANK:0};
     movimenti.forEach(m => {
-      if (contiArr.includes(m.fonte)) {
-        if (m.tipo === "Entrata") saldi[m.fonte] += m.euro;
+      if(contiArr.includes(m.fonte)) {
+        if(m.tipo==="Entrata") saldi[m.fonte] += m.euro;
         else saldi[m.fonte] -= m.euro;
       }
     });
-    document.getElementById('saldoContanti').textContent = "Contanti: €" + saldi.CONTANTI.toFixed(2);
-    document.getElementById('saldoRevolut').textContent = "Revolut: €" + saldi.REVOLUT.toFixed(2);
-    document.getElementById('saldoUnicredit').textContent = "Unicredit: €" + saldi.UNICREDIT.toFixed(2);
-    document.getElementById('saldoIsybank').textContent = "Isybank: €" + saldi.ISYBANK.toFixed(2);
-    let tot = saldi.CONTANTI + saldi.REVOLUT + saldi.UNICREDIT + saldi.ISYBANK;
-    document.getElementById('saldoTotale').textContent = "Totale: €" + tot.toFixed(2);
+    document.getElementById('saldoTotaleBar').textContent = "Saldo totale: €" 
+      + (saldi.CONTANTI + saldi.REVOLUT + saldi.UNICREDIT + saldi.ISYBANK).toFixed(2);
+    document.getElementById('saldoContanti').textContent = "Contanti: €"+saldi.CONTANTI.toFixed(2);
+    document.getElementById('saldoRevolut').textContent = "Revolut: €"+saldi.REVOLUT.toFixed(2);
+    document.getElementById('saldoUnicredit').textContent = "Unicredit: €"+saldi.UNICREDIT.toFixed(2);
+    document.getElementById('saldoIsybank').textContent = "Isybank: €"+saldi.ISYBANK.toFixed(2);
   }
 
-  // Budget modificabile con data ultima modifica e mese
+  // Budget modificabile con data e mese
   function loadBudget() {
     let budgetText = localStorage.getItem('budgetText') || "Inserisci qui i dati del budget...";
     let budgetMonth = localStorage.getItem('budgetMonth') || "";
     let budgetDate = localStorage.getItem('budgetDate') || null;
-
     document.getElementById('budgetText').value = budgetText;
     document.getElementById('budgetMonth').value = budgetMonth;
-    if (budgetDate) {
+    if(budgetDate) {
       document.getElementById('budgetLastMod').textContent = "Ultima modifica: " + new Date(budgetDate).toLocaleString();
     } else {
       document.getElementById('budgetLastMod').textContent = "Nessuna modifica salvata";
@@ -536,48 +518,44 @@
   }
 
   // Salva budget
-  document.getElementById('saveBudgetBtn').addEventListener('click', function () {
-    let budgetText = document.getElementById('budgetText').value;
-    let budgetMonth = document.getElementById('budgetMonth').value;
-    localStorage.setItem('budgetText', budgetText);
-    localStorage.setItem('budgetMonth', budgetMonth);
+  document.getElementById('saveBudgetBtn').addEventListener('click', () => {
+    localStorage.setItem('budgetText', document.getElementById('budgetText').value);
+    localStorage.setItem('budgetMonth', document.getElementById('budgetMonth').value);
     localStorage.setItem('budgetDate', new Date().toISOString());
     loadBudget();
     alert("Budget salvato!");
   });
 
-  // Gestione categorie visualizzazione e editing
+  // Categorie UI
   function renderCategorie() {
     const tbody = document.getElementById('catTabBody');
     tbody.innerHTML = "";
     const cats = loadCategories();
-    ['Uscita','Entrata'].forEach(tipo=>{
+    ['Uscita', 'Entrata'].forEach(tipo => {
       cats[tipo].forEach((cat, idx) => {
         const tr = document.createElement('tr');
-
         let bgColor = '';
         let fgColor = '';
-        if(startCategories.Uscita.includes(cat)) { bgColor = '#ffe5e5'; fgColor='#b20000'; }
-        if(startCategories.Entrata.includes(cat)) { bgColor = '#eaffea'; fgColor='#067e15'; }
-        if(["RISTORANTE","VACANZA","REGALI","ALTRO EXTRA","USCITE","SIGARETTE"].includes(cat)) { bgColor='#fff9e3'; fgColor='#b38800'; }
+        if (startCategories.Uscita.includes(cat)) { bgColor = '#ffe5e5'; fgColor = '#b20000'; }
+        else if (startCategories.Entrata.includes(cat)) { bgColor = '#eaffea'; fgColor = '#067e15'; }
+        if (["RISTORANTE", "VACANZA", "REGALI", "ALTRO EXTRA", "USCITE", "SIGARETTE"].includes(cat)) { bgColor = '#fff9e3'; fgColor = '#b38800'; }
+
         tr.style.backgroundColor = bgColor;
         tr.style.color = fgColor;
 
         tr.innerHTML = `
           <td>${tipo}</td>
           <td>${cat}</td>
-          <td>
-            <button class="del-btn" title="Elimina categoria" data-tipo="${tipo}" data-index="${idx}">Elimina</button>
-          </td>`;
+          <td><button class="del-btn" title="Elimina categoria" data-tipo="${tipo}" data-index="${idx}">Elimina</button></td>
+        `;
         tbody.appendChild(tr);
       });
     });
-    // Delete buttons
-    tbody.querySelectorAll('.del-btn').forEach(btn=>{
-      btn.onclick = function() {
+    tbody.querySelectorAll('.del-btn').forEach(btn => {
+      btn.onclick = function () {
         const tipo = this.dataset.tipo;
         const idx = parseInt(this.dataset.index);
-        let cats = loadCategories();
+        const cats = loadCategories();
         cats[tipo].splice(idx, 1);
         saveCategories(cats);
         renderCategorie();
@@ -586,20 +564,20 @@
     });
   }
 
-  // Aggiungi nuova categoria
-  document.getElementById('newCatForm').onsubmit = function(e) {
+  // Aggiungi categoria
+  document.getElementById('newCatForm').onsubmit = function (e) {
     e.preventDefault();
     const nuovaCat = document.getElementById('nuovaCat').value.trim();
     const tipo = document.getElementById('catTipo').value;
-    if (!nuovaCat) return alert("Inserisci il nome della categoria");
-    let cats = loadCategories();
-    if(cats[tipo].includes(nuovaCat)) return alert("Categoria già presente");
+    if (!nuovaCat) { alert('Inserisci il nome della categoria'); return; }
+    const cats = loadCategories();
+    if (cats[tipo].includes(nuovaCat)) { alert('Categoria già presente'); return; }
     cats[tipo].push(nuovaCat);
     saveCategories(cats);
     renderCategorie();
     setCategoryOptions(document.getElementById('tipo').value);
     document.getElementById('nuovaCat').value = '';
-    alert("Categoria aggiunta!");
+    alert('Categoria aggiunta!');
   };
 </script>
 </body>
