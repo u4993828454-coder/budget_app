@@ -1,122 +1,324 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Bilancio Personale Multitab</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 1000px; margin: 20px auto; background: #f7f7f7;}
-    h1 { text-align: center; }
-    nav { margin: 20px 0; }
-    nav button { padding:10px 25px;margin-right:5px;font-size:1.1em;border:none;border-radius:6px;cursor:pointer;}
-    .active { background: #339cff; color: #fff; }
-    section { display:none; padding:16px; background:#fff; border-radius:8px; box-shadow:1px 2px 8px #bbb;}
-    section.active { display:block; }
-    table { width:100%; margin-top:10px; border-collapse:collapse; }
-    th, td { border:1px solid #ddd; padding:4px; }
-    th { background:#eee; }
-    label { margin-top: 8px; font-weight: bold; display:block; }
-    select, input, button { width: 100%; padding: 10px; margin: 8px 0;}
-    .saldo-row { display:flex; gap:25px; margin-bottom:12px; }
-    .saldo-box { background:#e3e3e3; border-radius:7px; padding:14px; min-width:140px; font-size:1.2em; text-align:center;}
-    .add-btn { background: #33c16c; color: #fff; border: none; border-radius: 8px; font-size: 1em; cursor: pointer; padding:7px 30px;}
-    .del-btn { background: #c13333; color:#fff; border:none; border-radius:8px; font-size:1em; cursor:pointer; padding:5px 15px;}
-    #budgetCopy { white-space:pre-line; font-family:monospace; background:#f7f7f7; padding:14px; border-radius:7px;} 
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1000px;
+      margin: 20px auto;
+      background: #f7f7f7;
+      user-select: none; /* prevent accidental text selection */
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 5px;
+      user-select: text;
+    }
+
+    nav {
+      margin: 20px 0;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    nav button {
+      padding: 10px 25px;
+      font-size: 1.1em;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.3s ease;
+    }
+
+    nav button.active,
+    nav button:hover {
+      filter: brightness(0.9);
+    }
+
+    /* Tab background colors */
+    #btnInput {
+      background-color: #c92a2a; /* red */
+      color: white;
+    }
+
+    #btnDettaglio {
+      background-color: #d9a620; /* yellow */
+      color: #222;
+    }
+
+    #btnBudget,
+    #btnCategorie {
+      background-color: #6c757d; /* gray */
+      color: white;
+    }
+
+    #btnSaldo {
+      background-color: #339cff; /* blue */
+      color: white;
+    }
+
+    section {
+      display: none;
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 1px 2px 8px #bbb;
+      min-height: 300px;
+      transition: opacity 0.3s ease;
+    }
+
+    section.active {
+      display: block;
+      opacity: 1;
+    }
+
+    label {
+      font-weight: bold;
+      margin-top: 12px;
+      display: block;
+      user-select: text;
+    }
+
+    select,
+    input,
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 1em;
+      user-select: text;
+    }
+
+    button[type='submit'] {
+      margin-top: 20px;
+      background-color: #777777; /* gray */
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.3s ease;
+    }
+
+    button[type='submit']:hover {
+      background-color: #5a5a5a;
+    }
+
+    /* Table styling */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+      user-select: none;
+    }
+
+    th,
+    td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+      user-select: text;
+    }
+
+    th {
+      background-color: #eee;
+      font-weight: bold;
+      user-select: text;
+    }
+
+    /* Categorie colors */
+    option.essenziale {
+      background-color: #ffe5e5; /* light red */
+      color: #b20000;
+      font-weight: bold;
+    }
+
+    option.extra {
+      background-color: #fff9e3; /* light yellow */
+      color: #b38800;
+      font-weight: bold;
+    }
+
+    option.entrata {
+      background-color: #eaffea; /* light green */
+      color: #067e15;
+      font-weight: bold;
+    }
+
+    /* Table row highlight by category */
+    tr.essenziale td {
+      background-color: #fff2f2;
+      color: #a10000;
+    }
+
+    tr.extra td {
+      background-color: #fffbe6;
+      color: #a67c00;
+    }
+
+    tr.entrata td {
+      background-color: #e7f9e7;
+      color: #056605;
+    }
+
+    /* Scroll for large tables */
+    #dettaglioTable_wrapper,
+    #budgetCopy_wrapper {
+      overflow-x: auto;
+    }
+
+    /* Budget copy monospace and scroll */
+    #budgetCopy {
+      white-space: pre-wrap;
+      font-family: monospace;
+      background: #f7f7f7;
+      padding: 20px;
+      border-radius: 8px;
+      max-height: 400px;
+      overflow-y: auto;
+      user-select: text;
+    }
+
+    /* Saldo boxes */
+    .saldo-row {
+      display: flex;
+      gap: 25px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      user-select: text;
+    }
+
+    .saldo-box {
+      background: #e3e3e3;
+      border-radius: 7px;
+      padding: 14px;
+      min-width: 140px;
+      font-size: 1.2em;
+      text-align: center;
+      user-select: text;
+      cursor: default;
+      font-weight: bold;
+      color: #333;
+    }
+
+    /* Colored box for total saldo */
+    #saldoTotale {
+      background-color: #339cff;
+      color: white;
+    }
   </style>
 </head>
 <body>
   <h1>Bilancio Personale</h1>
   <nav>
-    <button id="btnInput" class="active">Input</button>
-    <button id="btnDettaglio">Dettaglio Spese</button>
-    <button id="btnBudget">Budget</button>
-    <button id="btnCategorie">Categorie</button>
-    <button id="btnSaldo">Saldo</button>
+    <button id="btnInput" class="active" title="Scheda di inserimento dati">Input</button>
+    <button id="btnDettaglio" title="Elenco dettagliato dei movimenti">Dettaglio Spese</button>
+    <button id="btnBudget" title="Riepilogo Budget annuale e percentuali">Budget</button>
+    <button id="btnCategorie" title="Gestione dinamica categorie">Categorie</button>
+    <button id="btnSaldo" title="Saldo suddiviso per fonte">Saldo</button>
   </nav>
 
   <!-- SALDO -->
   <section id="tabSaldo">
     <h2>Saldo conti</h2>
-    <div class="saldo-row">
-      <div class="saldo-box" id="saldoContanti">Contanti: €0.00</div>
-      <div class="saldo-box" id="saldoRevolut">Revolut: €0.00</div>
-      <div class="saldo-box" id="saldoUnicredit">Unicredit: €0.00</div>
-      <div class="saldo-box" id="saldoIsybank">Isybank: €0.00</div>
-      <div class="saldo-box" style="background:#339cff; color:#fff" id="saldoTotale">Totale: €0.00</div>
+    <div class="saldo-row" title="Saldo aggiornato per fonte e totale">
+      <div class="saldo-box" id="saldoContanti" title="Contanti">Contanti: €0.00</div>
+      <div class="saldo-box" id="saldoRevolut" title="Revolut">Revolut: €0.00</div>
+      <div class="saldo-box" id="saldoUnicredit" title="Unicredit">Unicredit: €0.00</div>
+      <div class="saldo-box" id="saldoIsybank" title="Isybank">Isybank: €0.00</div>
+      <div class="saldo-box" id="saldoTotale" title="Saldo totale complessivo">Totale: €0.00</div>
     </div>
   </section>
 
   <!-- Input movimento -->
   <section id="tabInput" class="active">
     <h2>Nuovo Movimento</h2>
-    <form id="movForm">
-      <label>Tipo</label>
-      <select id="tipo" required>
+    <form id="movForm" title="Inserisci un nuovo movimento finanziario">
+      <label for="tipo">Tipo<span style="color:#b20000;">*</span></label>
+      <select id="tipo" required aria-required="true" title="Seleziona Entrata o Uscita">
         <option value="Uscita" selected>Uscita</option>
         <option value="Entrata">Entrata</option>
       </select>
-      <label>Fonte</label>
-      <select id="fonte" required>
-        <option value="CONTANTI">CONTANTI</option>
-        <option value="REVOLUT">REVOLUT</option>
-        <option value="UNICREDIT">UNICREDIT</option>
-        <option value="ISYBANK">ISYBANK</option>
+
+      <label for="fonte">Fonte<span style="color:#b20000;">*</span></label>
+      <select id="fonte" required aria-required="true" title="Seleziona la fonte di pagamento o accredito">
+        <option value="CONTANTI" selected class="essenziale">CONTANTI</option>
+        <option value="REVOLUT" class="essenziale">REVOLUT</option>
+        <option value="UNICREDIT" class="essenziale">UNICREDIT</option>
+        <option value="ISYBANK" class="essenziale">ISYBANK</option>
       </select>
-      <label>Data</label>
-      <input type="date" id="data" required>
-      <label>Importo (€)</label>
-      <input type="number" id="euro" min="0" step="0.01" required>
-      <label>Descrizione</label>
-      <input type="text" id="descrizione" required>
-      <label>Categoria</label>
-      <select id="categoria" required></select>
-      <button type="submit">Aggiungi</button>
+
+      <label for="data">Data<span style="color:#b20000;">*</span></label>
+      <input type="date" id="data" required aria-required="true" title="Inserisci la data del movimento" />
+
+      <label for="euro">Importo (€)<span style="color:#b20000;">*</span></label>
+      <input type="number" id="euro" min="0" step="0.01" required aria-required="true" title="Inserisci l'importo" />
+
+      <label for="descrizione" title="Descrizione facoltativa">Descrizione (facoltativa)</label>
+      <input type="text" id="descrizione" aria-required="false" placeholder="Descrizione (opzionale)" title="Puoi aggiungere una descrizione" />
+
+      <label for="categoria">Categoria<span style="color:#b20000;">*</span></label>
+      <select id="categoria" required aria-required="true" title="Seleziona la categoria">
+        <!-- Popolato da JS -->
+      </select>
+
+      <button type="submit" title="Aggiungi il movimento">Aggiungi</button>
     </form>
   </section>
 
   <!-- Dettaglio spese -->
   <section id="tabDettaglio">
     <h2>Dettaglio Spese</h2>
-    <table id="dettaglioTable">
+    <table id="dettaglioTable" aria-describedby="dettaglioDescr" role="grid" title="Tabella dettagliata movimenti">
       <thead>
         <tr>
-          <th>Tipo</th>
-          <th>Fonte</th>
-          <th>Data</th>
-          <th>Mese</th>
-          <th>Anno</th>
-          <th>Euro</th>
-          <th>Descrizione</th>
-          <th>Categoria</th>
+          <th scope="col">Tipo</th>
+          <th scope="col">Fonte</th>
+          <th scope="col">Data</th>
+          <th scope="col">Mese</th>
+          <th scope="col">Anno</th>
+          <th scope="col">Euro</th>
+          <th scope="col">Descrizione</th>
+          <th scope="col">Categoria</th>
         </tr>
       </thead>
       <tbody></tbody>
     </table>
+    <p id="dettaglioDescr" hidden>Tabella dei movimenti dettagliati con tipo, data, importo, descrizione e categoria</p>
   </section>
 
   <!-- Budget -->
   <section id="tabBudget">
     <h2>Budget</h2>
-    <div id="budgetCopy"></div>
+    <pre id="budgetCopy" aria-live="polite" tabindex="0" role="region"></pre>
   </section>
 
   <!-- Categorie -->
   <section id="tabCategorie">
-    <h2>Categorie</h2>
-    <form id="newCatForm">
-      <label>Nuova categoria</label>
-      <input type="text" id="nuovaCat" placeholder="Nome categoria">
-      <select id="catTipo">
+    <h2>Gestione Categorie</h2>
+    <form id="newCatForm" aria-label="Aggiungi una nuova categoria">
+      <label for="nuovaCat">Nuova categoria<span style="color:#b20000;">*</span></label>
+      <input type="text" id="nuovaCat" placeholder="Nome categoria" aria-required="true" />
+      <label for="catTipo">Tipo<span style="color:#b20000;">*</span></label>
+      <select id="catTipo" aria-required="true" >
         <option value="Uscita">Uscita</option>
         <option value="Entrata">Entrata</option>
       </select>
-      <button type="submit" class="add-btn">Aggiungi</button>
+      <button type="submit" class="add-btn" title="Aggiungi categoria">Aggiungi</button>
     </form>
-    <table>
+    <table aria-label="Tabella categorie" role="grid" id="catTable">
       <thead>
         <tr>
-          <th>Tipo</th>
-          <th>Categoria</th>
-          <th>Azioni</th>
+          <th scope="col">Tipo</th>
+          <th scope="col">Categoria</th>
+          <th scope="col">Azioni</th>
         </tr>
       </thead>
       <tbody id="catTabBody"></tbody>
@@ -124,131 +326,326 @@
   </section>
 
 <script>
-const startCategories = {
-  Uscita: [
-    "TRASPORTI","AFFITTO","UTENZE","SPESA E ALIMENTARI","CURA PERSONALE",
-    "SPESE MEDICHE","VESTITI ESSENZIALI","COSE DELLA CASA","SPESE SCOLASTICHE",
-    "RISTORANTE","VACANZA","REGALI","ALTRO EXTRA","USCITE","SIGARETTE"
-  ],
-  Entrata: [
-    "Lavoro","Mamma","Nonna","Roxana","Entrate extra","Rimborsi"
-  ]
-};
-const contiArr = ["CONTANTI","REVOLUT","UNICREDIT","ISYBANK"];
+  // Categorie iniziali
+  const startCategories = {
+    Uscita: [
+      "TRASPORTI",
+      "AFFITTO",
+      "UTENZE",
+      "SPESA E ALIMENTARI",
+      "CURA PERSONALE",
+      "SPESE MEDICHE",
+      "VESTITI ESSENZIALI",
+      "COSE DELLA CASA",
+      "SPESE SCOLASTICHE",
+      "RISTORANTE",
+      "VACANZA",
+      "REGALI",
+      "ALTRO EXTRA",
+      "USCITE",
+      "SIGARETTE"
+    ],
+    Entrata: [
+      "Lavoro",
+      "Mamma",
+      "Nonna",
+      "Roxana",
+      "Entrate extra",
+      "Rimborsi"
+    ]
+  };
 
-// Gestione categorie interattive
-function loadCategories() {
-  let cats = JSON.parse(localStorage.getItem('categorie') || "null");
-  return cats || JSON.parse(JSON.stringify(startCategories));
-}
-function saveCategories(cats) {
-  localStorage.setItem('categorie', JSON.stringify(cats));
-}
-function setCategoryOptions(tipo) {
-  let select = document.getElementById('categoria');
-  select.innerHTML = '<option value="">Seleziona categoria</option>';
-  loadCategories()[tipo].forEach(c => {
-    let opt = document.createElement('option');
-    opt.value = c;
-    opt.textContent = c;
-    select.appendChild(opt);
+  // Fonti per saldo
+  const contiArr = ["CONTANTI", "REVOLUT", "UNICREDIT", "ISYBANK"];
+
+  // Navigazione schede
+  function showTab(tab) {
+    document.querySelectorAll('nav button').forEach((btn) =>
+      btn.classList.remove('active')
+    );
+    document.querySelectorAll('section').forEach((sec) =>
+      sec.classList.remove('active')
+    );
+    document.getElementById('btn' + tab).classList.add('active');
+    document.getElementById('tab' + tab).classList.add('active');
+    if (tab === "Saldo") calcSaldo();
+    else if (tab === "Dettaglio") loadDettaglio();
+    else if (tab === "Budget") calcBudgetCopy();
+    else if (tab === "Categorie") renderCategorie();
+  }
+  document.getElementById('btnInput').onclick = () => showTab('Input');
+  document.getElementById('btnDettaglio').onclick = () => showTab('Dettaglio');
+  document.getElementById('btnBudget').onclick = () => showTab('Budget');
+  document.getElementById('btnCategorie').onclick = () => showTab('Categorie');
+  document.getElementById('btnSaldo').onclick = () => showTab('Saldo');
+
+  // Gestione categorie: carica, salva, aggiungi, cancella
+  function loadCategories() {
+    let cats = JSON.parse(localStorage.getItem('categorie') || "null");
+    return cats || JSON.parse(JSON.stringify(startCategories));
+  }
+  function saveCategories(cats) {
+    localStorage.setItem('categorie', JSON.stringify(cats));
+  }
+  function setCategoryOptions(tipo) {
+    let select = document.getElementById('categoria');
+    select.innerHTML = '<option value="">Seleziona categoria</option>';
+    loadCategories()[tipo].forEach((c) => {
+      let opt = document.createElement('option');
+      opt.value = c;
+      opt.textContent = c;
+      // Colorazione
+      if (startCategories.Uscita.includes(c))
+        opt.style.backgroundColor = "#ffe5e5"; // rosso chiaro uscite
+      if (startCategories.Entrata.includes(c))
+        opt.style.backgroundColor = "#eaffea"; // verde entrate
+      if (
+        [
+          "RISTORANTE",
+          "VACANZA",
+          "REGALI",
+          "ALTRO EXTRA",
+          "USCITE",
+          "SIGARETTE",
+        ].includes(c)
+      )
+        opt.style.backgroundColor = "#fff9e3"; // giallo extra
+      select.appendChild(opt);
+    });
+  }
+  document.getElementById('tipo').addEventListener('change', function () {
+    setCategoryOptions(this.value);
   });
-}
-document.getElementById('tipo').addEventListener('change', function() {
-  setCategoryOptions(this.value);
-});
 
-// Gestione saldo
-function calcSaldo() {
-  let movimenti = JSON.parse(localStorage.getItem('movimenti') || "[]");
-  let saldi = {CONTANTI:0, REVOLUT:0, UNICREDIT:0, ISYBANK:0};
-  movimenti.forEach(m => {
-    if(contiArr.includes(m.fonte)){
-      if(m.tipo==="Entrata") saldi[m.fonte] += m.euro;
-      else saldi[m.fonte] -= m.euro;
+  // Inizializzazione selettori e dati
+  document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('data').value = new Date().toISOString().split('T')[0];
+    if (!localStorage.getItem('categorie')) saveCategories(startCategories);
+    setCategoryOptions('Uscita');
+    document.getElementById('fonte').value = "CONTANTI";
+    calcSaldo();
+    loadDettaglio();
+    calcBudgetCopy();
+    renderCategorie();
+  });
+
+  // Salva nuovo movimento
+  document.getElementById('movForm').onsubmit = function (e) {
+    e.preventDefault();
+    const tipo = document.getElementById('tipo').value;
+    const fonte = document.getElementById('fonte').value;
+    const data = document.getElementById('data').value;
+    const euro = parseFloat(document.getElementById('euro').value);
+    const descrizione = document.getElementById('descrizione').value || '';
+    const categoria = document.getElementById('categoria').value;
+    const dt = new Date(data);
+    const mese = dt.toLocaleString('it-IT', { month: 'long' });
+    const anno = dt.getFullYear();
+    const movimenti = JSON.parse(localStorage.getItem('movimenti') || "[]");
+    movimenti.push({ tipo, fonte, data, mese, anno, euro, descrizione, categoria });
+    localStorage.setItem('movimenti', JSON.stringify(movimenti));
+    this.reset();
+    document.getElementById('tipo').value = "Uscita";
+    setCategoryOptions('Uscita');
+    document.getElementById('fonte').value = "CONTANTI";
+    document.getElementById('data').value = new Date().toISOString().split('T')[0];
+    alert("Movimento inserito!");
+    calcSaldo();
+    loadDettaglio();
+    calcBudgetCopy();
+  };
+
+  // Carica dettaglio
+  function loadDettaglio() {
+    const tbody = document.querySelector('#dettaglioTable tbody');
+    tbody.innerHTML = '';
+    const movimenti = JSON.parse(localStorage.getItem('movimenti') || "[]");
+    movimenti.forEach((m) => {
+      const tr = document.createElement('tr');
+      let classe = "";
+      if (startCategories.Uscita.includes(m.categoria)) classe = 'essenziale';
+      if (startCategories.Entrata.includes(m.categoria)) classe = 'entrata';
+      if (
+        [
+          "RISTORANTE",
+          "VACANZA",
+          "REGALI",
+          "ALTRO EXTRA",
+          "USCITE",
+          "SIGARETTE",
+        ].includes(m.categoria)
+      ) classe = 'extra';
+
+      tr.className = classe;
+      tr.innerHTML = `
+        <td>${m.tipo}</td>
+        <td>${m.fonte}</td>
+        <td>${m.data}</td>
+        <td>${m.mese}</td>
+        <td>${m.anno}</td>
+        <td>€${m.euro.toFixed(2)}</td>
+        <td>${m.descrizione}</td>
+        <td>${m.categoria}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Calcola saldo per fonti
+  function calcSaldo() {
+    const movimenti = JSON.parse(localStorage.getItem('movimenti') || "[]");
+    const saldi = { CONTANTI: 0, REVOLUT: 0, UNICREDIT: 0, ISYBANK: 0 };
+    movimenti.forEach((m) => {
+      if (contiArr.includes(m.fonte)) {
+        if (m.tipo === "Entrata") saldi[m.fonte] += m.euro;
+        else saldi[m.fonte] -= m.euro;
+      }
+    });
+    document.getElementById('saldoContanti').textContent = "Contanti: €" + saldi.CONTANTI.toFixed(2);
+    document.getElementById('saldoRevolut').textContent = "Revolut: €" + saldi.REVOLUT.toFixed(2);
+    document.getElementById('saldoUnicredit').textContent = "Unicredit: €" + saldi.UNICREDIT.toFixed(2);
+    document.getElementById('saldoIsybank').textContent = "Isybank: €" + saldi.ISYBANK.toFixed(2);
+    const tot = saldi.CONTANTI + saldi.REVOLUT + saldi.UNICREDIT + saldi.ISYBANK;
+    document.getElementById('saldoTotale').textContent = "Totale: €" + tot.toFixed(2);
+  }
+
+  // Budget tab: copia del foglio google semplificata con totali e percentuali
+  function calcBudgetCopy() {
+    const mov = JSON.parse(localStorage.getItem('movimenti') || "[]");
+    // Calcola totale annuale uscite NECESSITÀ
+    const necessitaCats = [
+      "TRASPORTI",
+      "AFFITTO",
+      "UTENZE",
+      "SPESA E ALIMENTARI",
+      "CURA PERSONALE",
+      "SPESE MEDICHE",
+      "VESTITI ESSENZIALI",
+      "COSE DELLA CASA",
+      "SPESE SCOLASTICHE",
+    ];
+    const extraCats = [
+      "RISTORANTE",
+      "VACANZA",
+      "REGALI",
+      "ALTRO EXTRA",
+      "USCITE",
+      "SIGARETTE",
+    ];
+
+    function totalByCats(cats) {
+      return mov
+        .filter(
+          (m) => cats.includes(m.categoria) && m.tipo === "Uscita"
+        )
+        .reduce((tot, m) => tot + m.euro, 0);
     }
-  });
-  document.getElementById('saldoContanti').innerHTML = "Contanti: €"+saldi.CONTANTI.toFixed(2);
-  document.getElementById('saldoRevolut').innerHTML = "Revolut: €"+saldi.REVOLUT.toFixed(2);
-  document.getElementById('saldoUnicredit').innerHTML = "Unicredit: €"+saldi.UNICREDIT.toFixed(2);
-  document.getElementById('saldoIsybank').innerHTML = "Isybank: €"+saldi.ISYBANK.toFixed(2);
-  let tot = saldi.CONTANTI + saldi.REVOLUT + saldi.UNICREDIT + saldi.ISYBANK;
-  document.getElementById('saldoTotale').innerHTML = "Totale: €"+tot.toFixed(2);
-}
+    const totNecessita = totalByCats(necessitaCats);
+    const totExtra = totalByCats(extraCats);
+    const totEntrate = mov
+      .filter((m) => m.tipo === "Entrata")
+      .reduce((tot, m) => tot + m.euro, 0);
+    const totUscite = mov
+      .filter((m) => m.tipo === "Uscita")
+      .reduce((tot, m) => tot + m.euro, 0);
+    const saldo = totEntrate - totUscite;
+    // Calcola percentuali
+    const percNecessita = totUscite ? (totNecessita / totUscite) * 100 : 0;
+    const percExtra = totUscite ? (totExtra / totUscite) * 100 : 0;
+    const percRisparmio = totEntrate ? (saldo / totEntrate) * 100 : 0;
 
-// Navigazione tab
-function showTab(tab) {
-  document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
-  document.querySelectorAll('section').forEach(sec => sec.classList.remove('active'));
-  document.getElementById('btn' + tab).classList.add('active');
-  document.getElementById('tab' + tab).classList.add('active');
-  if(tab==="Saldo"){ calcSaldo(); }
-  if(tab==="Dettaglio"){ loadDettaglio(); }
-  if(tab==="Budget"){ calcBudgetCopy(); }
-  if(tab==="Categorie"){ renderCategorie(); }
-}
-document.getElementById('btnInput').onclick = () => showTab('Input');
-document.getElementById('btnDettaglio').onclick = () => showTab('Dettaglio');
-document.getElementById('btnBudget').onclick = () => showTab('Budget');
-document.getElementById('btnCategorie').onclick = () => showTab('Categorie');
-document.getElementById('btnSaldo').onclick = () => showTab('Saldo');
+    // Costruisci tabella testuale come nel foglio
+    const testo = `
+Budget (simulazione)
+--------------------
 
-// All’avvio
-document.addEventListener('DOMContentLoaded', function() {
-  document.getElementById('data').value = new Date().toISOString().split('T')[0];
-  if(!localStorage.getItem('categorie')) saveCategories(startCategories);
-  setCategoryOptions('Uscita');
-  calcSaldo(); loadDettaglio(); calcBudgetCopy(); renderCategorie();
-});
+€ / anno Totale entrate: €${totEntrate.toFixed(2)}
+€ / anno Totale uscite: €${totUscite.toFixed(2)}
+€ / anno Saldo: €${saldo.toFixed(2)}
 
-// Salva nuovo movimento su localStorage
-document.getElementById('movForm').onsubmit = function(e) {
-  e.preventDefault();
-  let tipo = document.getElementById('tipo').value;
-  let fonte = document.getElementById('fonte').value;
-  let data = document.getElementById('data').value;
-  let euro = parseFloat(document.getElementById('euro').value);
-  let descrizione = document.getElementById('descrizione').value;
-  let categoria = document.getElementById('categoria').value;
-  let dt = new Date(data);
-  let mese = dt.toLocaleString('it-IT', { month: 'long' });
-  let anno = dt.getFullYear();
-  let movimenti = JSON.parse(localStorage.getItem('movimenti') || "[]");
-  movimenti.push({tipo, fonte, data, mese, anno, euro, descrizione, categoria});
-  localStorage.setItem('movimenti', JSON.stringify(movimenti));
-  this.reset();
-  document.getElementById('tipo').value = "Uscita";
-  setCategoryOptions('Uscita');
-  document.getElementById('fonte').value = "CONTANTI";
-  document.getElementById('data').value = new Date().toISOString().split('T')[0];
-  alert("Movimento inserito!");
-  calcSaldo(); loadDettaglio(); calcBudgetCopy();
-}
+Necessità: €${totNecessita.toFixed(2)} (${percNecessita.toFixed(1)}%)
+Extra: €${totExtra.toFixed(2)} (${percExtra.toFixed(1)}%)
+Risparmio stimato: €${saldo.toFixed(2)} (${percRisparmio.toFixed(1)}%)
 
-// Dettaglio spese
-function loadDettaglio() {
-  let tbody = document.querySelector('#dettaglioTable tbody');
-  tbody.innerHTML = '';
-  let movimenti = JSON.parse(localStorage.getItem('movimenti') || "[]");
-  movimenti.forEach(m => {
-    let row = `<tr>
-      <td>${m.tipo}</td>
-      <td>${m.fonte}</td>
-      <td>${m.data}</td>
-      <td>${m.mese}</td>
-      <td>${m.anno}</td>
-      <td>€ ${m.euro.toFixed(2)}</td>
-      <td>${m.descrizione}</td>
-      <td>${m.categoria}</td>
-    </tr>`;
-    tbody.innerHTML += row;
-  });
-}
+Dettaglio uscite per categoria necessità:
+----------------------------------------
+${necessitaCats
+  .map((cat) => {
+    const tot = mov
+      .filter((m) => m.categoria === cat && m.tipo === "Uscita")
+      .reduce((s, m) => s + m.euro, 0);
+    return `${cat.padEnd(20)}: €${tot.toFixed(2)}`;
+  })
+  .join('\n')}
 
-// Budget tab: copia esatta foglio Google (testo)
-function calcBudgetCopy() {
-  let mov = JSON.parse(localStorage.getItem('movimenti') || "[]");
-  let euroAnnualeNec = mov.filter(m=>["TRASPORTI","AFFITTO","UTENZE","SPESA E ALIMENTARI",
-    "CURA PERSONALE","SPESE MEDICHE","VESTITI ESSENZIALI","COSE DELLA CASA","SPESE SCOLASTICHE"].includes(m.categoria) && m.tipo==="Uscita")
-    .reduce((tot,m)=>tot+m.euro,0);
-  let euroAnnualeExtra = mov.filter(m=>["
+Dettaglio uscite per categoria extra:
+------------------------------------
+${extraCats
+  .map((cat) => {
+    const tot = mov
+      .filter((m) => m.categoria === cat && m.tipo === "Uscita")
+      .reduce((s, m) => s + m.euro, 0);
+    return `${cat.padEnd(20)}: €${tot.toFixed(2)}`;
+  })
+  .join('\n')}
+`;
+    document.getElementById('budgetCopy').textContent = testo;
+  }
+
+  // Gestione categorie UI
+  function renderCategorie() {
+    const tbody = document.getElementById('catTabBody');
+    tbody.innerHTML = '';
+    const cats = loadCategories();
+    ['Uscita', 'Entrata'].forEach((tipo) => {
+      cats[tipo].forEach((cat, idx) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${tipo}</td>
+          <td>${cat}</td>
+          <td><button class="del-btn" title="Elimina categoria" data-tipo="${tipo}" data-index="${idx}">Elimina</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    });
+    // Attach delete event listeners
+    tbody.querySelectorAll('.del-btn').forEach((btn) => {
+      btn.onclick = function () {
+        const tipo = this.dataset.tipo;
+        const idx = parseInt(this.dataset.index);
+        const cats = loadCategories();
+        cats[tipo].splice(idx, 1);
+        saveCategories(cats);
+        renderCategorie();
+        // Refresh categoria select if needed
+        const selTipo = document.getElementById('tipo').value;
+        setCategoryOptions(selTipo);
+      };
+    });
+  }
+
+  // Aggiunta categoria
+  document.getElementById('newCatForm').onsubmit = function (e) {
+    e.preventDefault();
+    const nuovaCat = document.getElementById('nuovaCat').value.trim();
+    const tipo = document.getElementById('catTipo').value;
+    if (!nuovaCat) {
+      alert('Inserisci il nome della categoria');
+      return;
+    }
+    const cats = loadCategories();
+    if (cats[tipo].includes(nuovaCat)) {
+      alert('Categoria già presente');
+      return;
+    }
+    cats[tipo].push(nuovaCat);
+    saveCategories(cats);
+    renderCategorie();
+    document.getElementById('nuovaCat').value = '';
+    setCategoryOptions(document.getElementById('tipo').value);
+    alert('Categoria aggiunta!');
+  };
+
+</script>
+</body>
+</html>
