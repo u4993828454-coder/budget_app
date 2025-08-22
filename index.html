@@ -1,229 +1,229 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8" />
-  <title>Bilancio Personale Completo</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 1000px;
-      margin: 20px auto;
-      background: #f7f7f7;
-    }
+<meta charset="UTF-8" />
+<title>Bilancio Personale con Budget per Categoria e Mese</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    max-width: 1000px;
+    margin: 20px auto;
+    background: #f7f7f7;
+  }
 
-    h1 {
-      text-align: center;
-      margin-bottom: 5px;
-    }
+  h1 {
+    text-align: center;
+    margin-bottom: 5px;
+  }
 
-    #saldoTotaleBar {
-      background: #339cff;
-      color: white;
-      font-weight: bold;
-      padding: 15px;
-      text-align: center;
-      border-radius: 8px;
-      margin-bottom: 18px;
-      font-size: 1.2em;
-      user-select: text;
-      position: sticky;
-      top: 0;
-      z-index: 999;
-    }
+  #saldoTotaleBar {
+    background: #339cff;
+    color: white;
+    font-weight: bold;
+    padding: 15px;
+    text-align: center;
+    border-radius: 8px;
+    margin-bottom: 18px;
+    font-size: 1.2em;
+    user-select: text;
+    position: sticky;
+    top: 0;
+    z-index: 999;
+  }
 
-    nav {
-      margin: 20px 0;
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
+  nav {
+    margin: 20px 0;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
 
-    nav button {
-      padding: 10px 25px;
-      font-size: 1.1em;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      user-select: none;
-      transition: background-color 0.3s ease;
-    }
+  nav button {
+    padding: 10px 25px;
+    font-size: 1.1em;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.3s ease;
+  }
 
-    nav button.active,
-    nav button:hover {
-      filter: brightness(0.9);
-    }
+  nav button.active,
+  nav button:hover {
+    filter: brightness(0.9);
+  }
 
-    #btnInput {
-      background-color: #c92a2a;
-      color: white;
-    }
+  #btnInput {
+    background-color: #c92a2a;
+    color: white;
+  }
 
-    #btnDettaglio {
-      background-color: #d9a620;
-      color: #222;
-    }
+  #btnDettaglio {
+    background-color: #d9a620;
+    color: #222;
+  }
 
-    #btnBudget,
-    #btnCategorie {
-      background-color: #6c757d;
-      color: white;
-    }
+  #btnBudget,
+  #btnCategorie {
+    background-color: #6c757d;
+    color: white;
+  }
 
-    #btnSaldo {
-      background-color: #339cff;
-      color: white;
-    }
+  #btnSaldo {
+    background-color: #339cff;
+    color: white;
+  }
 
-    section {
-      display: none;
-      padding: 20px;
-      background: white;
-      border-radius: 8px;
-      box-shadow: 1px 2px 8px #bbb;
-      min-height: 320px;
-      transition: opacity 0.3s ease;
-    }
+  section {
+    display: none;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 1px 2px 8px #bbb;
+    min-height: 320px;
+    transition: opacity 0.3s ease;
+  }
 
-    section.active {
-      display: block;
-      opacity: 1;
-    }
+  section.active {
+    display: block;
+    opacity: 1;
+  }
 
-    label {
-      font-weight: bold;
-      margin-top: 12px;
-      display: block;
-    }
+  label {
+    font-weight: bold;
+    margin-top: 12px;
+    display: block;
+  }
 
-    select,
-    input,
-    button,
-    textarea {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 1em;
-      font-family: inherit;
-      resize: vertical;
-    }
+  select,
+  input,
+  button,
+  textarea {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 1em;
+    font-family: inherit;
+    resize: vertical;
+  }
 
-    button[type='submit'],
-    button.edit-btn,
-    button.del-btn {
-      margin-top: 20px;
-      background-color: #777;
-      color: white;
-      border: none;
-      cursor: pointer;
-      font-weight: bold;
-      transition: background-color 0.3s ease;
-      border-radius: 7px;
-      padding: 10px;
-      user-select: none;
-    }
+  button[type='submit'],
+  button.edit-btn,
+  button.del-btn {
+    margin-top: 20px;
+    background-color: #777;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+    border-radius: 7px;
+    padding: 10px;
+    user-select: none;
+  }
 
-    button[type='submit']:hover,
-    button.edit-btn:hover,
-    button.del-btn:hover {
-      background-color: #555;
-    }
+  button[type='submit']:hover,
+  button.edit-btn:hover,
+  button.del-btn:hover {
+    background-color: #555;
+  }
 
-    button.del-btn {
-      background-color: #c92a2a;
-      margin-left: 5px;
-    }
+  button.del-btn {
+    background-color: #c92a2a;
+    margin-left: 5px;
+  }
 
-    button.del-btn:hover {
-      background-color: #a12424;
-    }
+  button.del-btn:hover {
+    background-color: #a12424;
+  }
 
-    /* Table styling */
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 16px;
-      user-select: none;
-    }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+    user-select: none;
+  }
 
-    th,
-    td {
-      border: 1px solid #ddd;
-      padding: 6px;
-      text-align: center;
-      vertical-align: middle;
-      user-select: text;
-    }
+  th,
+  td {
+    border: 1px solid #ddd;
+    padding: 6px;
+    text-align: center;
+    vertical-align: middle;
+    user-select: text;
+  }
 
-    th {
-      background-color: #eee;
-      font-weight: bold;
-      user-select: text;
-    }
+  th {
+    background-color: #eee;
+    font-weight: bold;
+    user-select: text;
+  }
 
-    /* Category colors */
-    .essenziale {
-      background-color: #ffe5e5;
-      color: #b20000;
-      font-weight: bold;
-    }
+  option.essenziale {
+    background-color: #ffe5e5 !important;
+    color: #b20000 !important;
+    font-weight: bold;
+  }
 
-    .extra {
-      background-color: #fff9e3;
-      color: #b38800;
-      font-weight: bold;
-    }
+  option.extra {
+    background-color: #fff9e3 !important;
+    color: #b38800 !important;
+    font-weight: bold;
+  }
 
-    .entrata {
-      background-color: #eaffea;
-      color: #067e15;
-      font-weight: bold;
-    }
+  option.entrata {
+    background-color: #eaffea !important;
+    color: #067e15 !important;
+    font-weight: bold;
+  }
 
-    /* Rows colored */
-    tr.essenziale td {
-      background-color: #fff2f2;
-      color: #a10000;
-    }
+  tr.essenziale td {
+    background-color: #fff2f2;
+    color: #a10000;
+  }
 
-    tr.extra td {
-      background-color: #fffbe6;
-      color: #a67c00;
-    }
+  tr.extra td {
+    background-color: #fffbe6;
+    color: #a67c00;
+  }
 
-    tr.entrata td {
-      background-color: #e7f9e7;
-      color: #056605;
-    }
+  tr.entrata td {
+    background-color: #e7f9e7;
+    color: #056605;
+  }
 
-    /* Budget editing area */
-    #budgetText {
-      width: 100%;
-      height: 280px;
-      font-family: monospace;
-      font-size: 14px;
-      white-space: pre-wrap;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      padding: 12px;
-      background-color: #f7f7f7;
-      user-select: text;
-      resize: vertical;
-    }
+  #budgetText {
+    width: 100%;
+    min-height: 280px;
+    font-family: monospace;
+    font-size: 14px;
+    white-space: pre-wrap;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    padding: 12px;
+    background-color: #f7f7f7;
+    user-select: text;
+    resize: vertical;
+    box-sizing: border-box;
+  }
 
-    /* Form within categories */
-    #newCatForm {
-      margin-bottom: 20px;
-    }
-  </style>
+  #budgetMonth {
+    margin-top: 5px;
+  }
+
+  #newCatForm {
+    margin-bottom: 20px;
+  }
+</style>
 </head>
 <body>
   <h1>Bilancio Personale</h1>
   <div id="saldoTotaleBar" aria-live="polite" role="region" aria-label="Saldo totale">Saldo totale: €0.00</div>
 
-  <nav aria-label="Navigazione sezioni">
+  <nav aria-label="Navigazione">
     <button id="btnInput" class="active" title="Scheda di inserimento dati">Input</button>
     <button id="btnDettaglio" title="Elenco dettagliato movimenti">Dettaglio Spese</button>
     <button id="btnBudget" title="Riepilogo Budget annuale modificabile">Budget</button>
@@ -255,7 +255,7 @@
       <label for="euro">Importo (€)<span style="color:#b20000;">*</span></label>
       <input type="number" id="euro" min="0" step="0.01" required aria-required="true" title="Inserisci l'importo" />
 
-      <label for="descrizione" title="Descrizione facoltativa">Descrizione (facoltativa)</label>
+      <label for="descrizione">Descrizione (facoltativa)</label>
       <input type="text" id="descrizione" aria-required="false" placeholder="Descrizione (opzionale)" title="Puoi aggiungere una descrizione" />
 
       <label for="categoria">Categoria<span style="color:#b20000;">*</span></label>
@@ -263,7 +263,7 @@
         <!-- Popolato da JS -->
       </select>
 
-      <button type="submit" title="Aggiungi il movimento">Aggiungi</button>
+      <button type="submit" style="background:#6c757d;color:white;">Aggiungi</button>
     </form>
   </section>
 
@@ -387,7 +387,7 @@
       const opt = document.createElement('option');
       opt.value = c;
       opt.textContent = c;
-      // Colori categorie come richiesto
+      // colori categorie input
       if (startCategories.Uscita.includes(c)) {
         opt.style.backgroundColor = "#ffe5e5"; // rosso chiaro
         opt.style.color = "#b20000";
@@ -433,6 +433,9 @@
     let movimenti = JSON.parse(localStorage.getItem('movimenti') || "[]");
     movimenti.push({tipo, fonte, data, mese, anno, euro, descrizione, categoria});
     localStorage.setItem('movimenti', JSON.stringify(movimenti));
+    // aggiorno dettaglio subito
+    loadDettaglio();
+    calcSaldo();
 
     this.reset();
     document.getElementById('tipo').value = "Uscita";
@@ -440,12 +443,9 @@
     document.getElementById('fonte').value = "CONTANTI";
     document.getElementById('data').value = new Date().toISOString().split('T')[0];
     alert("Movimento inserito!");
-    loadDettaglio();
-    calcSaldo();
     loadBudget();
   };
 
-  // Dettaglio spese con eliminazione
   function loadDettaglio() {
     let tbody = document.querySelector('#dettaglioTable tbody');
     tbody.innerHTML = "";
@@ -471,7 +471,6 @@
       `;
       tbody.appendChild(tr);
     });
-    // delete buttons listeners
     tbody.querySelectorAll('.del-btn').forEach(btn => {
       btn.onclick = function () {
         let idx = parseInt(this.dataset.idx);
@@ -485,48 +484,45 @@
     });
   }
 
-  // Saldo calcolo e visualizzazione sempre aggiornata
   function calcSaldo() {
     let movimenti = JSON.parse(localStorage.getItem('movimenti') || "[]");
-    let saldi = {CONTANTI:0, REVOLUT:0, UNICREDIT:0, ISYBANK:0};
+    let saldi = {CONTANTI: 0, REVOLUT: 0, UNICREDIT: 0, ISYBANK: 0};
     movimenti.forEach(m => {
-      if(contiArr.includes(m.fonte)) {
-        if(m.tipo==="Entrata") saldi[m.fonte] += m.euro;
+      if (contiArr.includes(m.fonte)) {
+        if (m.tipo === "Entrata") saldi[m.fonte] += m.euro;
         else saldi[m.fonte] -= m.euro;
       }
     });
-    document.getElementById('saldoTotaleBar').textContent = "Saldo totale: €" 
-      + (saldi.CONTANTI + saldi.REVOLUT + saldi.UNICREDIT + saldi.ISYBANK).toFixed(2);
-    document.getElementById('saldoContanti').textContent = "Contanti: €"+saldi.CONTANTI.toFixed(2);
-    document.getElementById('saldoRevolut').textContent = "Revolut: €"+saldi.REVOLUT.toFixed(2);
-    document.getElementById('saldoUnicredit').textContent = "Unicredit: €"+saldi.UNICREDIT.toFixed(2);
-    document.getElementById('saldoIsybank').textContent = "Isybank: €"+saldi.ISYBANK.toFixed(2);
+    document.getElementById('saldoTotaleBar').textContent = "Saldo totale: €" + (saldi.CONTANTI + saldi.REVOLUT + saldi.UNICREDIT + saldi.ISYBANK).toFixed(2);
+    document.getElementById('saldoContanti').textContent = "Contanti: €" + saldi.CONTANTI.toFixed(2);
+    document.getElementById('saldoRevolut').textContent = "Revolut: €" + saldi.REVOLUT.toFixed(2);
+    document.getElementById('saldoUnicredit').textContent = "Unicredit: €" + saldi.UNICREDIT.toFixed(2);
+    document.getElementById('saldoIsybank').textContent = "Isybank: €" + saldi.ISYBANK.toFixed(2);
   }
 
-  // Budget modificabile con data e mese
   function loadBudget() {
-    let budgetText = localStorage.getItem('budgetText') || "Inserisci qui i dati del budget...";
-    let budgetMonth = localStorage.getItem('budgetMonth') || "";
-    let budgetDate = localStorage.getItem('budgetDate') || null;
-    document.getElementById('budgetText').value = budgetText;
-    document.getElementById('budgetMonth').value = budgetMonth;
-    if(budgetDate) {
-      document.getElementById('budgetLastMod').textContent = "Ultima modifica: " + new Date(budgetDate).toLocaleString();
+    let budgetMonthStorage = localStorage.getItem('budgetMonth') || "";
+    let budgetTextStorage = localStorage.getItem('budgetText') || "Inserisci qui il budget...";
+    let budgetLastMod = localStorage.getItem('budgetDate');
+    document.getElementById('budgetMonth').value = budgetMonthStorage;
+    document.getElementById('budgetText').value = budgetTextStorage;
+    if (budgetLastMod) {
+      document.getElementById('budgetLastMod').textContent = "Ultima modifica: " + new Date(budgetLastMod).toLocaleString();
     } else {
       document.getElementById('budgetLastMod').textContent = "Nessuna modifica salvata";
     }
   }
 
-  // Salva budget
-  document.getElementById('saveBudgetBtn').addEventListener('click', () => {
-    localStorage.setItem('budgetText', document.getElementById('budgetText').value);
-    localStorage.setItem('budgetMonth', document.getElementById('budgetMonth').value);
-    localStorage.setItem('budgetDate', new Date().toISOString());
+  document.getElementById('saveBudgetBtn').onclick = function () {
+    let budgetText = document.getElementById('budgetText').value;
+    let budgetMonth = document.getElementById('budgetMonth').value;
+    localStorage.setItem('budgetText', budgetText);
+    localStorage.setItem('budgetMonth', budgetMonth);
+    localStorage.setItem('budgetDate', (new Date()).toISOString());
+    alert('Budget salvato!');
     loadBudget();
-    alert("Budget salvato!");
-  });
+  };
 
-  // Categorie UI
   function renderCategorie() {
     const tbody = document.getElementById('catTabBody');
     tbody.innerHTML = "";
@@ -538,7 +534,7 @@
         let fgColor = '';
         if (startCategories.Uscita.includes(cat)) { bgColor = '#ffe5e5'; fgColor = '#b20000'; }
         else if (startCategories.Entrata.includes(cat)) { bgColor = '#eaffea'; fgColor = '#067e15'; }
-        if (["RISTORANTE", "VACANZA", "REGALI", "ALTRO EXTRA", "USCITE", "SIGARETTE"].includes(cat)) { bgColor = '#fff9e3'; fgColor = '#b38800'; }
+        if (['RISTORANTE', 'VACANZA', 'REGALI', 'ALTRO EXTRA', 'USCITE', 'SIGARETTE'].includes(cat)) { bgColor = '#fff9e3'; fgColor = '#b38800'; }
 
         tr.style.backgroundColor = bgColor;
         tr.style.color = fgColor;
@@ -564,14 +560,19 @@
     });
   }
 
-  // Aggiungi categoria
-  document.getElementById('newCatForm').onsubmit = function (e) {
+  document.getElementById('newCatForm').onsubmit = function(e) {
     e.preventDefault();
-    const nuovaCat = document.getElementById('nuovaCat').value.trim();
-    const tipo = document.getElementById('catTipo').value;
-    if (!nuovaCat) { alert('Inserisci il nome della categoria'); return; }
-    const cats = loadCategories();
-    if (cats[tipo].includes(nuovaCat)) { alert('Categoria già presente'); return; }
+    let nuovaCat = document.getElementById('nuovaCat').value.trim();
+    let tipo = document.getElementById('catTipo').value;
+    if (!nuovaCat) {
+      alert('Inserisci il nome della categoria');
+      return;
+    }
+    let cats = loadCategories();
+    if (cats[tipo].includes(nuovaCat)) {
+      alert('Categoria già esistente');
+      return;
+    }
     cats[tipo].push(nuovaCat);
     saveCategories(cats);
     renderCategorie();
