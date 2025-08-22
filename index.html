@@ -13,6 +13,26 @@
     th { background: #efefef;}
     .summary { margin-top: 20px; font-weight: bold;}
     .tab { margin-top:30px; }
+    .necessita { background: #ffe5e5; color: #b20000;}
+    .extra { background: #fff9e3; color: #b38800;}
+    .entrata { background: #eaffea; color: #067e15;}
+    #anteprimaBox { 
+      display:none; 
+      border: 2px solid #888; 
+      box-shadow:2px 2px 6px #bbb; 
+      background: #fff; 
+      padding: 15px; 
+      margin-bottom:20px;
+    }
+    #avvisoSaldoNegativo {
+      color: #fff;
+      background: #b20000;
+      font-weight: bold;
+      padding: 8px 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      display:none;
+    }
   </style>
 </head>
 <body>
@@ -25,29 +45,28 @@
       <input type="date" id="dateMov" required>
       <label>Tipo</label>
       <select id="tipoMov" required>
-        <option value="">Entrata o Uscita?</option>
+        <option value="Uscita" selected>Uscita</option>
         <option value="Entrata">Entrata</option>
-        <option value="Uscita">Uscita</option>
       </select>
       <label>Categoria</label>
       <select id="categoriaMov" required>
         <option value="">Seleziona categoria</option>
-        <option value="TRASPORTI">TRASPORTI (treno, bus, autostrada, parcheggi)</option>
+        <option value="TRASPORTI">TRASPORTI (necessità)</option>
         <option value="AFFITTO">AFFITTO</option>
-        <option value="UTENZE">UTENZE (acqua, energia, gas, internet, telefono)</option>
+        <option value="UTENZE">UTENZE</option>
         <option value="SPESA E ALIMENTARI">SPESA E ALIMENTARI</option>
-        <option value="CURA PERSONALE">CURA PERSONALE (shampoo, parrucchiere, dentista...)</option>
+        <option value="CURA PERSONALE">CURA PERSONALE</option>
         <option value="SPESE MEDICHE">SPESE MEDICHE</option>
         <option value="VESTITI ESSENZIALI">VESTITI ESSENZIALI</option>
         <option value="COSE DELLA CASA">COSE DELLA CASA</option>
         <option value="SPESE SCOLASTICHE">SPESE SCOLASTICHE</option>
-        <option value="RISTORANTE">RISTORANTE</option>
+        <option value="RISTORANTE">RISTORANTE (extra)</option>
         <option value="VACANZA">VACANZA</option>
         <option value="REGALI">REGALI</option>
         <option value="ALTRO EXTRA">ALTRO EXTRA</option>
         <option value="USCITE">USCITE</option>
         <option value="SIGARETTE">SIGARETTE</option>
-        <option value="Lavoro">Lavoro</option>
+        <option value="Lavoro">Lavoro (entrata)</option>
         <option value="Mamma">Mamma</option>
         <option value="Nonna">Nonna</option>
         <option value="Roxana">Roxana</option>
@@ -58,8 +77,15 @@
       <input type="text" id="descMov" placeholder="Descrizione">
       <label>Importo (€)</label>
       <input type="number" id="amountMov" step="0.01" min="0" required>
-      <button type="submit">Aggiungi Movimento</button>
+      <button type="button" id="anteprimaBtn">Anteprima</button>
     </form>
+    <div id="avvisoSaldoNegativo"></div>
+    <div id="anteprimaBox">
+      <h3>Movimento da aggiungere:</h3>
+      <div id="anteprimaTesto"></div>
+      <button type="button" id="inviaBtn">Invia</button>
+      <button type="button" id="annullaBtn">Annulla</button>
+    </div>
   </div>
 
   <div class="tab">
@@ -85,6 +111,18 @@
   </div>
 
 <script>
+// Categorie colorate
+const necessitaCats = [
+  "TRASPORTI", "AFFITTO", "UTENZE", "SPESA E ALIMENTARI", "CURA PERSONALE",
+  "SPESE MEDICHE", "VESTITI ESSENZIALI", "COSE DELLA CASA", "SPESE SCOLASTICHE"
+];
+const extraCats = [
+  "RISTORANTE", "VACANZA", "REGALI", "ALTRO EXTRA", "USCITE", "SIGARETTE"
+];
+const entrataCats = [
+  "Lavoro", "Mamma", "Nonna", "Roxana", "Entrate extra", "Rimborsi"
+];
+
 // Precompila la data con oggi
 document.addEventListener('DOMContentLoaded', function() {
   const oggi = new Date().toISOString().split('T')[0];
@@ -104,6 +142,13 @@ function updateTable() {
   tbody.innerHTML = '';
   movimenti.forEach(mov => {
     let tr = document.createElement('tr');
+    // Classe colore in base a categoria/tipo
+    let classe = "";
+    if (mov.tipo === "Entrata") classe = "entrata";
+    else if (necessitaCats.includes(mov.categoria)) classe = "necessita";
+    else if (extraCats.includes(mov.categoria)) classe = "extra";
+    tr.className = classe;
+
     tr.innerHTML = `
       <td>${mov.date}</td>
       <td>${mov.tipo}</td>
@@ -152,20 +197,62 @@ function updateSaldo(movimenti) {
     <strong>Saldo attuale:</strong> € ${(entrate - uscite).toFixed(2)}`;
 }
 
-document.getElementById('movForm').addEventListener('submit', function(e) {
-  e.preventDefault();
+// Gestione anteprima movimento
+document.getElementById('anteprimaBtn').addEventListener('click', function() {
   let date = document.getElementById('dateMov').value;
   let tipo = document.getElementById('tipoMov').value;
   let categoria = document.getElementById('categoriaMov').value;
   let desc = document.getElementById('descMov').value;
   let amount = parseFloat(document.getElementById('amountMov').value);
+
+  let movimenti = loadMovimenti();
+  let saldoCorrente = movimenti.filter(m => m.tipo === "Entrata").reduce((sum, x) => sum + x.amount, 0)
+    - movimenti.filter(m => m.tipo === "Uscita").reduce((sum, x) => sum + x.amount, 0);
+
+  // Calcola saldo dopo l'operazione
+  let saldoDopo = saldoCorrente + (tipo === "Entrata" ? amount : -amount);
+
+  if (tipo === "Uscita" && saldoDopo < 0) {
+    document.getElementById('avvisoSaldoNegativo').style.display = "block";
+    document.getElementById('avvisoSaldoNegativo').textContent = "Operazione non consentita: il saldo non può scendere sotto zero!";
+    document.getElementById('anteprimaBox').style.display = "none";
+    return;
+  } else {
+    document.getElementById('avvisoSaldoNegativo').style.display = "none";
+  }
+
+  // Mostra anteprima
+  document.getElementById('anteprimaBox').style.display = "block";
+  document.getElementById('anteprimaTesto').innerHTML =
+    `<strong>Data:</strong> ${date}<br>
+     <strong>Tipo:</strong> ${tipo}<br>
+     <strong>Categoria:</strong> ${categoria}<br>
+     <strong>Descrizione:</strong> ${desc}<br>
+     <strong>Importo:</strong> € ${amount.toFixed(2)}<br>
+     <strong>Saldo dopo operazione:</strong> € ${saldoDopo.toFixed(2)}`;
+});
+
+// Conferma inserimento
+document.getElementById('inviaBtn').addEventListener('click', function() {
+  let date = document.getElementById('dateMov').value;
+  let tipo = document.getElementById('tipoMov').value;
+  let categoria = document.getElementById('categoriaMov').value;
+  let desc = document.getElementById('descMov').value;
+  let amount = parseFloat(document.getElementById('amountMov').value);
+
   let movimenti = loadMovimenti();
   movimenti.push({ date, tipo, categoria, desc, amount });
   saveMovimenti(movimenti);
+
   updateTable();
-  this.reset();
-  // Rimetto la data a oggi per comodità
+  document.getElementById('movForm').reset();
   document.getElementById('dateMov').value = new Date().toISOString().split('T')[0];
+  document.getElementById('anteprimaBox').style.display = "none";
+});
+
+// Annulla inserimento
+document.getElementById('annullaBtn').addEventListener('click', function() {
+  document.getElementById('anteprimaBox').style.display = "none";
 });
 
 updateTable();
