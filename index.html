@@ -155,7 +155,6 @@
   .essenzialeSaldo { background: #ffe5e5; color: #b20000; }
   .extraSaldo { background: #fff9e3; color: #a97400; }
   .entrataSaldo { background: #e7f9e7; color: #056605; }
-
   #budgetNavigation {
     display: flex;
     justify-content: space-between;
@@ -167,8 +166,8 @@
     font-size: 1.1em;
   }
   #budgetTableContainer {
-    overflow-x: auto;
     max-height: 400px;
+    overflow-y: auto;
   }
   #budgetTable tbody input[type="number"] {
     width: 80px;
@@ -182,14 +181,14 @@
 <div id="saldoTotaleBar" aria-live="polite" role="region" aria-label="Saldo totale">Saldo totale: €0.00</div>
 
 <nav aria-label="Navigazione">
-  <button id="btnInput" class="active" title="Inserimento movimento">Input</button>
+  <button id="btnInput" class="active" title="Inserimento nuovo movimento">Input</button>
   <button id="btnDettaglio" title="Dettaglio movimenti">Dettaglio</button>
   <button id="btnBudget" title="Gestione budget">Budget</button>
   <button id="btnCategorie" title="Gestione categorie">Categorie</button>
   <button id="btnSaldo" title="Visualizza saldo">Saldo</button>
 </nav>
 
-<section id="tabInput" class="active" aria-label="Inserimento movimento">
+<section id="tabInput" class="active" aria-label="Inserimento nuovo movimento">
   <h2>Nuovo Movimento</h2>
   <form id="movForm">
     <label for="tipo">Tipo<span style="color:#b20000;">*</span></label>
@@ -233,367 +232,9 @@
     </thead>
     <tbody></tbody>
   </table>
-  <p id="dettaglioDescr" hidden>Movimenti raggruppati per mese. Puoi eliminarli singolarmente.</p>
 </section>
 
 <section id="tabBudget" aria-label="Budget mensile">
   <h2>Budget Mensile</h2>
   <div id="budgetNavigation">
-    <button id="prevMonthBtn">&lt;</button>
-    <div id="budgetMonthDisplay" aria-live="polite"></div>
-    <button id="nextMonthBtn">&gt;</button>
-  </div>
-  <div id="budgetTableContainer" style="max-height: 400px; overflow-y: auto;">
-    <table id="budgetTable" role="grid">
-      <thead>
-        <tr><th>Categoria</th><th>Budget (€)</th><th>Spese (€)</th><th>Rimanente (€)</th><th>% Usato</th></tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
-  <form id="budgetEditForm" style="margin-top:15px;">
-    <h3>Modifica budget</h3>
-    <table style="width: 100%; border-collapse: collapse;">
-      <tbody id="budgetEditBody"></tbody>
-    </table>
-    <button type="submit" style="margin-top:10px;">Salva Budget</button>
-  </form>
-</section>
-
-<section id="tabCategorie" aria-label="Gestione categorie">
-  <h2>Gestione Categorie</h2>
-  <form id="newCatForm">
-    <label for="nuovaCat">Nuova categoria<span style="color:#b20000;">*</span></label>
-    <input type="text" id="nuovaCat" autocomplete="off" aria-required="true" />
-    <label for="catTipo">Tipo<span style="color:#b20000;">*</span></label>
-    <select id="catTipo" aria-required="true">
-      <option value="Uscita">Uscita</option>
-      <option value="Entrata">Entrata</option>
-    </select>
-    <button type="submit">Aggiungi</button>
-  </form>
-  <table id="catTable" style="width: 100%; border-collapse: collapse; margin-top: 15px;">
-    <thead><tr><th>Tipo</th><th>Categoria</th><th>Azioni</th></tr></thead>
-    <tbody id="catTabBody"></tbody>
-  </table>
-</section>
-
-<section id="tabSaldo" aria-label="Saldo">
-  <h2>Saldo Conti</h2>
-  <div style="display:flex; gap:20px; flex-wrap: wrap;">
-    <div class="saldo-box essenzialeSaldo" id="saldoContanti">Contanti: €0.00</div>
-    <div class="saldo-box extraSaldo" id="saldoRevolut">Revolut: €0.00</div>
-    <div class="saldo-box extraSaldo" id="saldoUnicredit">Unicredit: €0.00</div>
-    <div class="saldo-box extraSaldo" id="saldoIsybank">Isybank: €0.00</div>
-    <div class="saldo-box extraSaldo" id="saldoSantander">Banco Santander: €0.00</div>
-  </div>
-</section>
-
-<script>
-  const startCategories = {
-    Uscita: ["TRASPORTI","AFFITTO","UTENZE","SPESA E ALIMENTARI","CURA PERSONALE","SPESE MEDICHE","VESTITI ESSENZIALI","COSE DELLA CASA","SPESE SCOLASTICHE","RISTORANTE","VACANZA","REGALI","ALTRO EXTRA","USCITE","SIGARETTE"],
-    Entrata: ["Lavoro","Mamma","Nonna","Roxana","Entrate extra","Rimborsi"]
-  };
-  const contiArr = ["CONTANTI", "REVOLUT", "UNICREDIT", "ISYBANK", "BANCO SANTANDER"];
-
-  // Utility:
-  const capitalize = str => str.charAt(0).toUpperCase() + str.slice(1);
-  const meseToNum = mese => {
-    const mesi = {"gennaio":1,"febbraio":2,"marzo":3,"aprile":4,"maggio":5,"giugno":6,"luglio":7,"agosto":8,"settembre":9,"ottobre":10,"novembre":11,"dicembre":12};
-    return mesi[mese.toLowerCase()] || 0;
-  };
-  const currentMonthFormatted = () =>{
-    const d = new Date();
-    return d.toLocaleDateString("it-IT", {month:'long', year:'numeric'});
-  };
-
-  ///////////////////////////// Categorie ////////////////////////////////////
-  function loadCategories(){
-    let cats=JSON.parse(localStorage.getItem("categorie"));
-    return cats || JSON.parse(JSON.stringify(startCategories));
-  }
-  function saveCategories(cats){
-    localStorage.setItem("categorie",JSON.stringify(cats));
-  }
-  function setCategoryOptions(tipo){
-    let select=document.getElementById("categoria");
-    select.innerHTML='<option value="">Seleziona categoria</option>';
-    let cats=loadCategories()[tipo];
-    cats.forEach(cat=>{
-      let opt=document.createElement("option");
-      opt.value=cat;
-      opt.textContent=cat;
-      if(startCategories.Uscita.includes(cat)) opt.className="essenziale";
-      else if(startCategories.Entrata.includes(cat)) opt.className="entrata";
-      if(["RISTORANTE","VACANZA","REGALI","ALTRO EXTRA","USCITE","SIGARETTE"].includes(cat)) opt.className="extra";
-      select.appendChild(opt);
-    });
-  }
-
-  document.getElementById("tipo").addEventListener("change",(e)=>setCategoryOptions(e.target.value));
-  document.getElementById("newCatForm").onsubmit = e => {
-    e.preventDefault();
-    let nuovaCat = document.getElementById("nuovaCat").value.trim();
-    let tipo = document.getElementById("catTipo").value;
-    if(!nuovaCat) {alert("Inserisci una categoria!"); return;}
-    let cats=loadCategories();
-    if(cats[tipo].includes(nuovaCat)){alert("Categoria già esistente");return;}
-    cats[tipo].push(nuovaCat);
-    saveCategories(cats);
-    renderCategorie();
-    setCategoryOptions(document.getElementById("tipo").value);
-    document.getElementById("nuovaCat").value = "";
-    alert("Categoria aggiunta!");
-  };
-
-  function renderCategorie(){
-    let tbody=document.getElementById("catTabBody");
-    tbody.innerHTML="";
-    let cats=loadCategories();
-    ["Uscita","Entrata"].forEach(tipo=>{
-      cats[tipo].forEach((cat,i)=>{
-        let tr=document.createElement("tr");
-        let bg="", fg="";
-        if(startCategories.Uscita.includes(cat)) { bg="#ffe5e5"; fg="#b20000"; }
-        else if(startCategories.Entrata.includes(cat)) { bg="#d8fbe0"; fg="#056005"; }
-        if(["RISTORANTE","VACANZA","REGALI","ALTRO EXTRA","USCITE","SIGARETTE"].includes(cat)) { bg="#fff9d4"; fg="#a97400"; }
-        tr.style.backgroundColor=bg;
-        tr.style.color=fg;
-        tr.innerHTML=`<td>${tipo}</td><td>${cat}</td><td><button class="del-btn" data-tipo="${tipo}" data-index="${i}">Elimina</button></td>`;
-        tbody.appendChild(tr);
-        tr.querySelector(".del-btn").onclick = e => {
-          let tipo = e.target.dataset.tipo;
-          let idx = parseInt(e.target.dataset.index);
-          let cats = loadCategories();
-          cats[tipo].splice(idx,1);
-          saveCategories(cats);
-          renderCategorie();
-          setCategoryOptions(document.getElementById("tipo").value);
-        };
-      });
-    });
-  }
-
-  ///////////////////////////// Movimenti ////////////////////////////////////
-  document.getElementById("movForm").onsubmit = e => {
-    e.preventDefault();
-    let tipo = document.getElementById("tipo").value;
-    let fonte = document.getElementById("fonte").value;
-    let data = document.getElementById("data").value;
-    let euro = parseFloat(document.getElementById("euro").value);
-    let descrizione = document.getElementById("descrizione").value || "";
-    let categoria = document.getElementById("categoria").value;
-    if(!categoria){
-      alert("Seleziona una categoria");
-      return;
-    }
-    let dt = new Date(data);
-    let mese = dt.toLocaleDateString("it-IT", {month:"long"});
-    let anno = dt.getFullYear();
-    let movs = JSON.parse(localStorage.getItem("movimenti")||"[]");
-    movs.push({tipo, fonte, data, euro, descrizione, categoria, mese, anno});
-    localStorage.setItem("movimenti", JSON.stringify(movs));
-    loadDettaglio();
-    calcSaldo();
-    resetForm();
-    displayBudget(currentBudgetMonth || currentMonthFormatted());
-    alert("Movimento inserito!");
-  };
-
-  function resetForm(){
-    document.getElementById("movForm").reset();
-    document.getElementById("tipo").value = "Uscita";
-    setCategoryOptions("Uscita");
-    document.getElementById("fonte").value = "CONTANTI";
-    document.getElementById("data").value = new Date().toISOString().split("T")[0];
-  }
-
-  function loadDettaglio(){
-    let tbody=document.querySelector("#dettaglioTable tbody");
-    tbody.innerHTML = "";
-    let movs = JSON.parse(localStorage.getItem("movimenti")||"[]");
-    if(movs.length === 0) return;
-    let gruppi = {};
-    movs.forEach(m=>{
-      let key = m.anno + "-" + m.mese.toLowerCase();
-      if(!gruppi[key]) gruppi[key] = [];
-      gruppi[key].push(m);
-    });
-    let keys = Object.keys(gruppi);
-    keys.sort((a,b)=>{
-      let [yA,mA] = a.split("-");
-      let [yB,mB] = b.split("-");
-      return new Date(yA, meseToNum(mA)-1) - new Date(yB,meseToNum(mB)-1);
-    });
-    keys.forEach(key => {
-      let [anno,mese] = key.split("-").reverse();
-      let trH = document.createElement("tr");
-      trH.className = "month-header";
-      trH.innerHTML = `<td colspan="9">${capitalize(mese)} ${anno}</td>`;
-      tbody.appendChild(trH);
-
-      gruppi[key].forEach(m=>{
-        let tr = document.createElement("tr");
-        let cls = "";
-        if(startCategories.Uscita.includes(m.categoria)) cls = "essenziale";
-        else if(startCategories.Entrata.includes(m.categoria)) cls = "entrata";
-        else if(["RISTORANTE","VACANZA","REGALI","ALTRO EXTRA","USCITE","SIGARETTE"].includes(m.categoria)) cls="extra";
-        tr.className = cls;
-        tr.innerHTML = `<td>${m.tipo}</td><td>${m.fonte}</td><td>${m.data}</td><td>${m.mese}</td><td>${m.anno}</td><td>€ ${m.euro.toFixed(2)}</td><td>${m.descrizione}</td><td>${m.categoria}</td><td><button class="del-btn">Elimina</button></td>`;
-        tbody.appendChild(tr);
-        tr.querySelector('.del-btn').onclick = () => {
-          const idx = movs.indexOf(m);
-          if(idx > -1){
-            movs.splice(idx,1);
-            localStorage.setItem("movimenti", JSON.stringify(movs));
-            loadDettaglio();
-            calcSaldo();
-            displayBudget(currentBudgetMonth || currentMonthFormatted());
-          }
-        };
-      });
-    });
-  }
-
-  // Saldo
-  function calcSaldo(){
-    let movs = JSON.parse(localStorage.getItem("movimenti")||"[]");
-    let saldo = {CONTANTI:0, REVOLUT:0, UNICREDIT:0, ISYBANK:0, "BANCO SANTANDER":0};
-    movs.forEach(m=>{
-      if(contiArr.includes(m.fonte)){
-        if(m.tipo==="Entrata") saldo[m.fonte]+=m.euro;
-        else saldo[m.fonte]-=m.euro;
-      }
-    });
-    document.getElementById("saldoTotaleBar").textContent = "Saldo totale: €" + Object.values(saldo).reduce((a,b)=>a+b,0).toFixed(2);
-    document.getElementById("saldoContanti").textContent = `Contanti: €${saldo.CONTANTI.toFixed(2)}`;
-    document.getElementById("saldoRevolut").textContent = `Revolut: €${saldo.REVOLUT.toFixed(2)}`;
-    document.getElementById("saldoUnicredit").textContent = `Unicredit: €${saldo.UNICREDIT.toFixed(2)}`;
-    document.getElementById("saldoIsybank").textContent = `Isybank: €${saldo.ISYBANK.toFixed(2)}`;
-    document.getElementById("saldoSantander").textContent = `Banco Santander: €${saldo["BANCO SANTANDER"].toFixed(2)}`;
-  }
-
-  // Budget mensile gestione
-  let currentBudgetMonth = null;
-  const budgetTableBody = document.querySelector("#budgetTable tbody");
-  const budgetEditBody = document.getElementById("budgetEditBody");
-  const budgetMonthDisplay = document.getElementById("budgetMonthDisplay");
-
-  function displayBudget(month){
-    if(!month) month = currentMonthFormatted();
-    currentBudgetMonth = month.toLowerCase();
-    budgetMonthDisplay.textContent = `Budget per ${capitalize(month)}`;
-
-    const budget = JSON.parse(localStorage.getItem("budget_" + currentBudgetMonth) || "{}");
-    const movs = JSON.parse(localStorage.getItem("movimenti") || "[]");
-    const [meseNome, annoStr] = currentBudgetMonth.split(" ");
-    const anno = parseInt(annoStr);
-
-    // calcola spese per categoria mese corrente
-    const expenses = {};
-    movs.forEach(m=>{
-      if(m.tipo === "Uscita" && m.mese.toLowerCase() === meseNome && m.anno === anno){
-        expenses[m.categoria] = (expenses[m.categoria] || 0) + m.euro;
-      }
-    });
-
-    // mostra tutte categorie in budget anche se valore 0
-    const catsAll = [...loadCategories().Uscita, ...loadCategories().Entrata].sort();
-
-    budgetTableBody.innerHTML = "";
-    budgetEditBody.innerHTML = "";
-
-    catsAll.forEach(cat => {
-      let budgVal = parseFloat(budget[cat]) || 0;
-      let spentVal = expenses[cat] || 0;
-      let remainVal = budgVal - spentVal;
-      let percent = budgVal > 0 ? (spentVal / budgVal) * 100 : 0;
-
-      let tr = document.createElement("tr");
-      tr.className = startCategories.Uscita.includes(cat) ? "essenziale" : (startCategories.Entrata.includes(cat) ? "entrata" : "extra");
-      tr.innerHTML = `
-        <td>${cat}</td>
-        <td>€ ${budgVal.toFixed(2)}</td>
-        <td>€ ${spentVal.toFixed(2)}</td>
-        <td>€ ${remainVal.toFixed(2)}</td>
-        <td>${percent.toFixed(1)}%</td>
-      `;
-      budgetTableBody.appendChild(tr);
-
-      // Form riga modifica budget
-      let trEdit = document.createElement("tr");
-      trEdit.className = tr.className;
-      trEdit.innerHTML = `
-        <td style="text-align:left;">${cat}<input type="hidden" name="category" value="${cat}"/></td>
-        <td><input type="number" name="budget" min="0" step="0.01" value="${budgVal.toFixed(2)}"/></td>
-      `;
-      budgetEditBody.appendChild(trEdit);
-    });
-  }
-
-  document.getElementById("budgetEditForm").onsubmit = e => {
-    e.preventDefault();
-    if(!currentBudgetMonth) currentBudgetMonth = currentMonthFormatted().toLowerCase();
-    const formData = new FormData(e.target);
-    const categories = formData.getAll('category');
-    const budgets = formData.getAll('budget');
-
-    const newBudgets = {};
-    for(let i = 0; i < categories.length; i++){
-      const b = parseFloat(budgets[i]);
-      if(!isNaN(b) && b >= 0){
-        newBudgets[categories[i]] = b;
-      }
-    }
-
-    if(confirm(`Sei sicuro di aggiornare il budget per ${capitalize(currentBudgetMonth)}?`)){
-      localStorage.setItem("budget_" + currentBudgetMonth, JSON.stringify(newBudgets));
-      localStorage.setItem("budgetLastModified", new Date().toISOString());
-      alert("Budget aggiornato!");
-      displayBudget(currentBudgetMonth);
-    }
-  };
-
-  // Cambio mese budget
-  document.getElementById("prevMonthBtn").onclick = () => {
-    currentBudgetMonth = getAdjacentMonth(currentBudgetMonth, -1);
-    displayBudget(currentBudgetMonth);
-  };
-  document.getElementById("nextMonthBtn").onclick = () => {
-    currentBudgetMonth = getAdjacentMonth(currentBudgetMonth, 1);
-    displayBudget(currentBudgetMonth);
-  };
-
-  function getAdjacentMonth(monthYearStr, diff){
-    if(!monthYearStr) monthYearStr = currentMonthFormatted().toLowerCase();
-    let [mese, anno] = monthYearStr.split(" ");
-    let annoNum = parseInt(anno);
-    let meseNum = meseToNum(mese);
-    meseNum += diff;
-    if(meseNum < 1){
-      meseNum = 12;
-      annoNum--;
-    } else if (meseNum > 12){
-      meseNum = 1;
-      annoNum++;
-    }
-    const mesi = ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
-    return `${mesi[meseNum-1]} ${annoNum}`;
-  }
-
-  // Init
-  window.onload = () => {
-    document.getElementById('data').value = new Date().toISOString().split('T')[0];
-    if(!localStorage.getItem('categorie')) saveCategories(startCategories);
-    setCategoryOptions('Uscita');
-    document.getElementById('fonte').value = 'CONTANTI';
-    loadDettaglio();
-    calcSaldo();
-    currentBudgetMonth = currentMonthFormatted();
-    displayBudget(currentBudgetMonth);
-    renderCategorie();
-  };
-</script>
-
-</body>
-</html>
+    <button id="prevMonthBtn" title
