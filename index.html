@@ -232,7 +232,6 @@
     </thead>
     <tbody></tbody>
   </table>
-  <p id="dettaglioDescr" hidden>Movimenti raggruppati per mese. Puoi eliminarli singolarmente.</p>
 </section>
 
 <section id="tabBudget" aria-label="Budget mensile">
@@ -243,7 +242,7 @@
     <button id="nextMonthBtn" title="Mese successivo">&gt;</button>
   </div>
   <div id="budgetTableContainer" style="max-height: 400px; overflow-y: auto;">
-    <table id="budgetTable" role="grid">
+    <table id="budgetTable" role="grid" style="width: 100%; border-collapse: collapse;">
       <thead>
         <tr><th>Categoria</th><th>Budget (€)</th><th>Spese (€)</th><th>Rimanente (€)</th><th>% Usato</th></tr>
       </thead>
@@ -290,32 +289,41 @@
 
 <script>
   const startCategories = {
-    Uscita: [
-      "TRASPORTI", "AFFITTO", "UTENZE", "SPESA E ALIMENTARI","CURA PERSONALE",
-      "SPESE MEDICHE", "VESTITI ESSENZIALI", "COSE DELLA CASA", "SPSE SCOLASTICHE",
-      "RISTORANTE", "VACANZA", "REGALI", "ALTRO EXTRA", "USCITE", "SIGARETTE"
-    ],
+    Uscita: ["TRASPORTI", "AFFITTO", "UTENZE", "SPESA E ALIMENTARI", "CURA PERSONALE", "SPESE MEDICHE", "VESTITI ESSENZIALI", "COSE DELLA CASA", "SPSE SCOLASTICHE", "RISTORANTE", "VACANZA", "REGALI", "ALTRO EXTRA", "USCITE", "SIGARETTE"],
     Entrata: ["Lavoro", "Mamma", "Nonna", "Roxana", "Entrate extra", "Rimborsi"]
   };
-  const contiArr = ["CONTANTI","REVOLUT","UNICREDIT","ISYBANK","BANCO SANTANDER"];
+  const contiArr = ["CONTANTI", "REVOLUT", "UNICREDIT", "ISYBANK", "BANCO SANTANDER"];
 
+  // Utility
   function capitalize(str) {
-    if (!str) return "";
-    return str.charAt(0).toUpperCase() + str.slice(1);
+    return (str && str.length) ? (str.charAt(0).toUpperCase() + str.slice(1)) : '';
   }
-  function meseToNum(nomeMese) {
-    const mesi = {gennaio:1,febbraio:2,marzo:3,aprile:4,maggio:5,giugno:6,luglio:7,agosto:8,settembre:9,ottobre:10,novembre:11,dicembre:12};
-    return mesi[nomeMese.toLowerCase()] || 0;
+  function meseToNum(mese) {
+    const mesi = {
+      gennaio: 1,
+      febbraio: 2,
+      marzo: 3,
+      aprile: 4,
+      maggio: 5,
+      giugno: 6,
+      luglio: 7,
+      agosto: 8,
+      settembre: 9,
+      ottobre: 10,
+      novembre: 11,
+      dicembre: 12,
+    };
+    return mesi[mese.toLowerCase()] || 0;
   }
   function getCurrentMonthFormatted() {
     const d = new Date();
-    return d.toLocaleDateString("it-IT",{year:"numeric",month:"long"});
+    return d.toLocaleDateString("it-IT", { month: "long", year: "numeric" });
   }
 
-  // Category management
+  // Categories
   function loadCategories() {
     let cats = JSON.parse(localStorage.getItem("categorie"));
-    if (!cats) {
+    if(!cats){
       localStorage.setItem("categorie", JSON.stringify(startCategories));
       return JSON.parse(JSON.stringify(startCategories));
     }
@@ -325,30 +333,30 @@
     localStorage.setItem("categorie", JSON.stringify(cats));
   }
   function setCategoryOptions(tipo) {
-    const select = document.getElementById("categoria");
+    const select = document.getElementById('categoria');
     select.innerHTML = '<option value="">Seleziona categoria</option>';
-    loadCategories()[tipo].forEach(cat=>{
-      const opt = document.createElement("option");
+    loadCategories()[tipo].forEach(cat => {
+      const opt = document.createElement('option');
       opt.value = cat;
       opt.textContent = cat;
-      if(startCategories.Uscita.includes(cat)) opt.className = "essenziale";
-      else if(startCategories.Entrata.includes(cat)) opt.className = "entrata";
-      if(["RISTORANTE", "VACANZA", "REGALI", "ALTRO EXTRA", "USCITE", "SIGARETTE"].includes(cat)) opt.className = "extra";
+      if (startCategories.Uscita.includes(cat)) opt.className = "essenziale";
+      else if (startCategories.Entrata.includes(cat)) opt.className = "entrata";
+      if (["RISTORANTE", "VACANZA", "REGALI", "ALTRO EXTRA", "USCITE", "SIGARETTE"].includes(cat)) opt.className = "extra";
       select.appendChild(opt);
     });
   }
-  document.getElementById("tipo").addEventListener("change", e=>setCategoryOptions(e.target.value));
+  document.getElementById('tipo').addEventListener('change', e => setCategoryOptions(e.target.value));
 
   document.getElementById("newCatForm").onsubmit = e => {
     e.preventDefault();
     let newCat = document.getElementById("nuovaCat").value.trim();
     let tipo = document.getElementById("catTipo").value;
-    if(!newCat){
+    if (!newCat) {
       alert("Inserisci una categoria");
       return;
     }
     let cats = loadCategories();
-    if(cats[tipo].includes(newCat)){
+    if (cats[tipo].includes(newCat)) {
       alert("Categoria già esistente");
       return;
     }
@@ -363,13 +371,13 @@
     const tbody = document.getElementById("catTabBody");
     tbody.innerHTML = "";
     const cats = loadCategories();
-    ["Uscita","Entrata"].forEach(tipo=>{
-      cats[tipo].forEach((cat,i)=>{
-        let tr = document.createElement("tr");
-        let bg="", fg="";
-        if(startCategories.Uscita.includes(cat)) { bg="#ffe5e5"; fg="#b20000"; }
-        else if(startCategories.Entrata.includes(cat)) { bg="#d8fbe0"; fg="#056005"; }
-        if(["RISTORANTE","VACANZA","REGALI","ALTRO EXTRA","USCITE","SIGARETTE"].includes(cat)) { bg="#fff9d4"; fg="#a97400"; }
+    ["Uscita", "Entrata"].forEach(tipo => {
+      cats[tipo].forEach((cat, i) => {
+        const tr = document.createElement("tr");
+        let bg = '', fg = '';
+        if (startCategories.Uscita.includes(cat)) { bg = '#ffe5e5'; fg = '#b20000'; }
+        else if (startCategories.Entrata.includes(cat)) { bg = '#d8fbe0'; fg = '#056005'; }
+        if (["RISTORANTE", "VACANZA", "REGALI", "ALTRO EXTRA", "USCITE", "SIGARETTE"].includes(cat)) { bg = '#fff9d4'; fg = '#a97400'; }
         tr.style.backgroundColor = bg;
         tr.style.color = fg;
         tr.innerHTML = `<td>${tipo}</td><td>${cat}</td><td><button class="del-btn" data-tipo="${tipo}" data-index="${i}">Elimina</button></td>`;
@@ -385,24 +393,24 @@
     });
   }
 
-  // Movimenti management
-  document.getElementById("movForm").onsubmit = e => {
+  // Movimenti
+  document.getElementById('movForm').onsubmit = e => {
     e.preventDefault();
-    let tipo = document.getElementById("tipo").value;
-    let fonte = document.getElementById("fonte").value;
-    let data = document.getElementById("data").value;
-    let euro = parseFloat(document.getElementById("euro").value);
-    let descrizione = document.getElementById("descrizione").value || "";
-    let categoria = document.getElementById("categoria").value;
-    if(!categoria){
+    let tipo = document.getElementById('tipo').value;
+    let fonte = document.getElementById('fonte').value;
+    let data = document.getElementById('data').value;
+    let euro = parseFloat(document.getElementById('euro').value);
+    let descrizione = document.getElementById('descrizione').value || "";
+    let categoria = document.getElementById('categoria').value;
+    if (!categoria) {
       alert("Seleziona una categoria");
       return;
     }
     let dt = new Date(data);
-    let mese = dt.toLocaleDateString("it-IT", {month:"long"});
+    let mese = dt.toLocaleDateString("it-IT", { month: "long" });
     let anno = dt.getFullYear();
-    let movs = JSON.parse(localStorage.getItem("movimenti")||"[]");
-    movs.push({tipo, fonte, data, euro, descrizione, categoria, mese, anno});
+    let movs = JSON.parse(localStorage.getItem("movimenti") || "[]");
+    movs.push({ tipo, fonte, data, euro, descrizione, categoria, mese, anno });
     localStorage.setItem("movimenti", JSON.stringify(movs));
     loadDettaglio();
     calcSaldo();
@@ -410,31 +418,31 @@
     displayBudget(currentBudgetMonth || getCurrentMonthFormatted());
     alert("Movimento inserito!");
   };
-  function resetForm(){
+  function resetForm() {
     document.getElementById("movForm").reset();
     document.getElementById("tipo").value = "Uscita";
     setCategoryOptions("Uscita");
     document.getElementById("fonte").value = "CONTANTI";
     document.getElementById("data").value = new Date().toISOString().split("T")[0];
   }
-  function loadDettaglio(){
+  function loadDettaglio() {
     const tbody = document.querySelector("#dettaglioTable tbody");
     tbody.innerHTML = "";
     const movs = JSON.parse(localStorage.getItem("movimenti") || "[]");
-    if(movs.length === 0) return;
+    if (movs.length === 0) return;
     let gruppi = {};
     movs.forEach(m => {
       let key = m.anno + "-" + m.mese.toLowerCase();
-      if(!gruppi[key]) gruppi[key] = [];
+      if (!gruppi[key]) gruppi[key] = [];
       gruppi[key].push(m);
     });
-    let keys = Object.keys(gruppi).sort((a,b) => {
-      let [yA,mA] = a.split("-");
-      let [yB,mB] = b.split("-");
-      return new Date(yA, meseToNum(mA)-1) - new Date(yB, meseToNum(mB)-1);
+    let keys = Object.keys(gruppi).sort((a, b) => {
+      let [yA, mA] = a.split("-");
+      let [yB, mB] = b.split("-");
+      return new Date(yA, meseToNum(mA) - 1) - new Date(yB, meseToNum(mB) - 1);
     });
     keys.forEach(k => {
-      let [anno,mese] = k.split("-").reverse();
+      let [anno, mese] = k.split("-").reverse();
       let trHeader = document.createElement("tr");
       trHeader.className = "month-header";
       trHeader.innerHTML = `<td colspan="9">${capitalize(mese)} ${anno}</td>`;
@@ -442,9 +450,9 @@
       gruppi[k].forEach(m => {
         let tr = document.createElement("tr");
         let cls = "";
-        if(startCategories.Uscita.includes(m.categoria)) cls = "essenziale";
-        else if(startCategories.Entrata.includes(m.categoria)) cls = "entrata";
-        else if(["RISTORANTE","VACANZA","REGALI","ALTRO EXTRA","USCITE","SIGARETTE"].includes(m.categoria)) cls = "extra";
+        if (startCategories.Uscita.includes(m.categoria)) cls = "essenziale";
+        else if (startCategories.Entrata.includes(m.categoria)) cls = "entrata";
+        else if (["RISTORANTE", "VACANZA", "REGALI", "ALTRO EXTRA", "USCITE", "SIGARETTE"].includes(m.categoria)) cls = "extra";
         tr.className = cls;
         tr.innerHTML = `
           <td>${m.tipo}</td><td>${m.fonte}</td><td>${m.data}</td><td>${m.mese}</td><td>${m.anno}</td>
@@ -452,9 +460,9 @@
           <td><button class="del-btn">Elimina</button></td>
         `;
         tbody.appendChild(tr);
-        tr.querySelector('.del-btn').onclick = () => {
+        tr.querySelector(".del-btn").onclick = () => {
           const idx = movs.indexOf(m);
-          if(idx > -1){
+          if (idx > -1) {
             movs.splice(idx, 1);
             localStorage.setItem("movimenti", JSON.stringify(movs));
             loadDettaglio();
@@ -466,16 +474,27 @@
     });
   }
 
-  // Saldo con Banco Santander incluso
-  function calcSaldo(){
+  // Saldo conti con Banco Santander
+  function calcSaldo() {
     const movs = JSON.parse(localStorage.getItem("movimenti") || "[]");
-    const saldo = {CONTANTI:0, REVOLUT:0, UNICREDIT:0, ISYBANK:0, "BANCO SANTANDER":0};
-    movs.forEach(m => {
-      if(contiArr.includes(m.fonte)){
-        (m.tipo === "Entrata" ? saldo[m.fonte]+=m.euro : saldo[m.fonte]-=m.euro);
+    const saldo = {
+      CONTANTI: 0,
+      REVOLUT: 0,
+      UNICREDIT: 0,
+      ISYBANK: 0,
+      "BANCO SANTANDER": 0,
+    };
+    movs.forEach((m) => {
+      if (contiArr.includes(m.fonte)) {
+        if (m.tipo === "Entrata") saldo[m.fonte] += m.euro;
+        else saldo[m.fonte] -= m.euro;
       }
     });
-    document.getElementById("saldoTotaleBar").textContent = "Saldo totale: €" + Object.values(saldo).reduce((a,b)=>a+b,0).toFixed(2);
+    document.getElementById("saldoTotaleBar").textContent =
+      "Saldo totale: €" +
+      Object.values(saldo)
+        .reduce((a, b) => a + b, 0)
+        .toFixed(2);
     document.getElementById("saldoContanti").textContent = `Contanti: €${saldo.CONTANTI.toFixed(2)}`;
     document.getElementById("saldoRevolut").textContent = `Revolut: €${saldo.REVOLUT.toFixed(2)}`;
     document.getElementById("saldoUnicredit").textContent = `Unicredit: €${saldo.UNICREDIT.toFixed(2)}`;
@@ -483,26 +502,25 @@
     document.getElementById("saldoSantander").textContent = `Banco Santander: €${saldo["BANCO SANTANDER"].toFixed(2)}`;
   }
 
-  // Budget mensile con navigazione mese e modifica categorie
+  // Budget Mensile con navigazione mese e modifica
   let currentBudgetMonth = null;
   const budgetTableBody = document.querySelector("#budgetTable tbody");
   const budgetEditBody = document.getElementById("budgetEditBody");
   const budgetMonthDisplay = document.getElementById("budgetMonthDisplay");
 
   function displayBudget(month) {
-    if(!month) month = getCurrentMonthFormatted();
+    if (!month) month = getCurrentMonthFormatted();
     currentBudgetMonth = month.toLowerCase();
     budgetMonthDisplay.textContent = `Budget per ${capitalize(month)}`;
-
     const budget = JSON.parse(localStorage.getItem("budget_" + currentBudgetMonth) || "{}");
     const movs = JSON.parse(localStorage.getItem("movimenti") || "[]");
     let [meseNome, annoStr] = currentBudgetMonth.split(" ");
     let anno = parseInt(annoStr);
 
     let expenses = {};
-    movs.forEach(m => {
-      if(m.tipo === "Uscita" && m.mese.toLowerCase() === meseNome && m.anno === anno){
-        expenses[m.categoria] = (expenses[m.categoria] || 0)+ m.euro;
+    movs.forEach((m) => {
+      if (m.tipo === "Uscita" && m.mese.toLowerCase() === meseNome && m.anno === anno) {
+        expenses[m.categoria] = (expenses[m.categoria] || 0) + m.euro;
       }
     });
 
@@ -511,39 +529,45 @@
     budgetTableBody.innerHTML = "";
     budgetEditBody.innerHTML = "";
 
-    catsAll.forEach(cat => {
+    catsAll.forEach((cat) => {
       let budgVal = parseFloat(budget[cat]) || 0;
       let spentVal = expenses[cat] || 0;
       let remainVal = budgVal - spentVal;
       let percent = budgVal > 0 ? (spentVal / budgVal) * 100 : 0;
-      let trClass = startCategories.Uscita.includes(cat) ? "essenziale" : (startCategories.Entrata.includes(cat) ? "entrata" : "extra");
+      let trClass = startCategories.Uscita.includes(cat)
+        ? "essenziale"
+        : startCategories.Entrata.includes(cat)
+        ? "entrata"
+        : "extra";
 
-      // Visualizza Budget Riepilogativo
       let tr = document.createElement("tr");
       tr.className = trClass;
-      tr.innerHTML = `<td>${cat}</td><td>€ ${budgVal.toFixed(2)}</td><td>€ ${spentVal.toFixed(2)}</td><td>€ ${remainVal.toFixed(2)}</td><td>${percent.toFixed(1)}%</td>`;
+      tr.innerHTML = `<td>${cat}</td><td>€ ${budgVal.toFixed(
+        2
+      )}</td><td>€ ${spentVal.toFixed(2)}</td><td>€ ${remainVal.toFixed(2)}</td><td>${percent.toFixed(1)}%</td>`;
       budgetTableBody.appendChild(tr);
 
-      // Form modifica budget
       let trEdit = document.createElement("tr");
       trEdit.className = trClass;
-      trEdit.innerHTML = `<td style="text-align:left;">${cat}<input type="hidden" name="category" value="${cat}"/></td><td><input type="number" name="budget" min="0" step="0.01" value="${budgVal.toFixed(2)}"/></td>`;
+      trEdit.innerHTML = `<td style="text-align:left;">${cat}<input type="hidden" name="category" value="${cat}"/></td><td><input type="number" name="budget" min="0" step="0.01" value="${budgVal.toFixed(
+        2
+      )}" /></td>`;
       budgetEditBody.appendChild(trEdit);
     });
   }
 
-  document.getElementById("budgetEditForm").onsubmit = e => {
+  document.getElementById("budgetEditForm").onsubmit = (e) => {
     e.preventDefault();
-    if(!currentBudgetMonth) currentBudgetMonth = getCurrentMonthFormatted().toLowerCase();
+    if (!currentBudgetMonth) currentBudgetMonth = getCurrentMonthFormatted().toLowerCase();
     const formData = new FormData(e.target);
-    const categories = formData.getAll('category');
-    const budgets = formData.getAll('budget');
+    const categories = formData.getAll("category");
+    const budgets = formData.getAll("budget");
     let newBudget = {};
-    for(let i=0; i<categories.length; i++){
+    for (let i = 0; i < categories.length; i++) {
       const val = parseFloat(budgets[i]);
-      if(!isNaN(val) && val >= 0) newBudget[categories[i]] = val;
+      if (!isNaN(val) && val >= 0) newBudget[categories[i]] = val;
     }
-    if(confirm(`Sei sicuro di aggiornare il budget per ${capitalize(currentBudgetMonth)}?`)){
+    if (confirm(`Sei sicuro di aggiornare il budget per ${capitalize(currentBudgetMonth)}?`)) {
       localStorage.setItem("budget_" + currentBudgetMonth, JSON.stringify(newBudget));
       localStorage.setItem("budgetLastModified", new Date().toISOString());
       alert("Budget aggiornato!");
@@ -559,32 +583,40 @@
     currentBudgetMonth = getAdjacentMonth(currentBudgetMonth, 1);
     displayBudget(currentBudgetMonth);
   };
-  function getAdjacentMonth(monthYearStr, diff){
-    if(!monthYearStr) monthYearStr = getCurrentMonthFormatted().toLowerCase();
+  function getAdjacentMonth(monthYearStr, diff) {
+    if (!monthYearStr) monthYearStr = getCurrentMonthFormatted().toLowerCase();
     let [mese, anno] = monthYearStr.split(" ");
     let annoNum = parseInt(anno);
     let meseNum = meseToNum(mese);
     meseNum += diff;
-    if(meseNum < 1){
+    if (meseNum < 1) {
       meseNum = 12;
       annoNum--;
-    } else if(meseNum > 12){
+    } else if (meseNum > 12) {
       meseNum = 1;
       annoNum++;
     }
-    const mesi = ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
-    return `${mesi[meseNum-1]} ${annoNum}`;
+    const mesi = [
+      "gennaio",
+      "febbraio",
+      "marzo",
+      "aprile",
+      "maggio",
+      "giugno",
+      "luglio",
+      "agosto",
+      "settembre",
+      "ottobre",
+      "novembre",
+      "dicembre",
+    ];
+    return `${mesi[meseNum - 1]} ${annoNum}`;
   }
 
-  function getCurrentMonthFormatted() {
-    const d = new Date();
-    return d.toLocaleDateString("it-IT", {month:"long", year:"numeric"});
-  }
-
-  // Inizializzazione pagina
+  // Init
   window.onload = () => {
-    document.getElementById("data").value = new Date().toISOString().split('T')[0];
-    if(!localStorage.getItem("categorie")) {
+    document.getElementById("data").value = new Date().toISOString().split("T")[0];
+    if (!localStorage.getItem("categorie")) {
       saveCategories(startCategories);
     }
     setCategoryOptions("Uscita");
@@ -596,6 +628,5 @@
     renderCategorie();
   };
 </script>
-
 </body>
 </html>
