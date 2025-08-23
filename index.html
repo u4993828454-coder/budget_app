@@ -335,15 +335,15 @@
       opt.value = c;
       opt.textContent = c;
       if (startCategories.Uscita.includes(c)) {
-        opt.style.backgroundColor = "#ffe5e5"; /* rosso chiaro */
+        opt.style.backgroundColor = "#ffe5e5"; // rosso chiaro
         opt.style.color = "#b20000";
       }
       if (startCategories.Entrata.includes(c)) {
-        opt.style.backgroundColor = "#eaffea"; /* verde */
+        opt.style.backgroundColor = "#eaffea"; // verde
         opt.style.color = "#067e15";
       }
       if (["RISTORANTE","VACANZA","REGALI","ALTRO EXTRA","USCITE","SIGARETTE"].includes(c)) {
-        opt.style.backgroundColor = "#fff9e3"; /* giallo */
+        opt.style.backgroundColor = "#fff9e3"; // giallo extra
         opt.style.color = "#b38800";
       }
       select.appendChild(opt);
@@ -391,22 +391,19 @@
     loadBudget();
   };
 
-  // Caricamento dettaglio movimenti raggruppati per mese/anno
   function loadDettaglio() {
     const tbody = document.querySelector('#dettaglioTable tbody');
     tbody.innerHTML = '';
     const movimenti = JSON.parse(localStorage.getItem('movimenti') || "[]");
     if(movimenti.length === 0) return;
 
-    // Raggruppa per anno-mese
     const gruppi = {};
     movimenti.forEach(m => {
-      const chiave = m.anno + '-' + m.mese.toLowerCase(); // es "2025-agosto"
+      const chiave = m.anno + '-' + m.mese.toLowerCase();
       if(!gruppi[chiave]) gruppi[chiave] = [];
       gruppi[chiave].push(m);
     });
 
-    // Ordina chiavi per data (cronologica)
     const chiaviOrdinate = Object.keys(gruppi).sort((a,b) => {
       const [yearA, monthA] = a.split('-');
       const [yearB, monthB] = b.split('-');
@@ -415,7 +412,6 @@
       return dataA - dataB;
     });
 
-    // Costruisci tabella raggruppata
     chiaviOrdinate.forEach(chiave => {
       const [anno, mese] = chiave.split('-').reverse();
       const trHeader = document.createElement('tr');
@@ -442,10 +438,9 @@
           <td><button class="del-btn" aria-label="Elimina movimento">Elimina</button></td>
         `;
         tbody.appendChild(tr);
-        // Listener delete singolo
         tr.querySelector('button.del-btn').onclick = () => {
           const i = movimenti.indexOf(m);
-          if (i > -1) {
+          if(i > -1) {
             movimenti.splice(i, 1);
             localStorage.setItem('movimenti', JSON.stringify(movimenti));
             loadDettaglio();
@@ -457,11 +452,11 @@
     });
   }
 
-  // HELPERS
   function meseITtoNumero(nomeMese) {
     const mesi = {gennaio:1,febbraio:2,marzo:3,aprile:4,maggio:5,giugno:6,luglio:7,agosto:8,settembre:9,ottobre:10,novembre:11,dicembre:12};
     return mesi[nomeMese.toLowerCase()] || 0;
   }
+
   function capitalize(str) {
     if(!str) return '';
     return str.charAt(0).toUpperCase() + str.slice(1);
@@ -532,7 +527,7 @@
         const tipo = this.dataset.tipo;
         const idx = parseInt(this.dataset.index);
         const cats = loadCategories();
-        cats[tipo].splice(idx, 1);
+        cats[tipo].splice(idx,1);
         saveCategories(cats);
         renderCategorie();
         setCategoryOptions(document.getElementById('tipo').value);
@@ -544,12 +539,12 @@
     e.preventDefault();
     let nuovaCat = document.getElementById('nuovaCat').value.trim();
     let tipo = document.getElementById('catTipo').value;
-    if (!nuovaCat) {
+    if(!nuovaCat){
       alert('Inserisci il nome della categoria');
       return;
     }
     let cats = loadCategories();
-    if (cats[tipo].includes(nuovaCat)) {
+    if(cats[tipo].includes(nuovaCat)){
       alert('Categoria già esistente');
       return;
     }
@@ -557,7 +552,7 @@
     saveCategories(cats);
     renderCategorie();
     setCategoryOptions(document.getElementById('tipo').value);
-    document.getElementById('nuovaCat').value = '';
+    document.getElementById('nuovaCat').value='';
     alert('Categoria aggiunta!');
   };
 </script>
