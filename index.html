@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8" />
-<title>Bilancio Personale Completo e Funzionale</title>
+<title>Bilancio Personale Completo e Mensile</title>
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -47,10 +47,10 @@
   nav button:hover {
     filter: brightness(0.85);
   }
-  #btnInput { background-color: #c92a2a; color:white; }
-  #btnDettaglio { background-color: #d9a620; color:#222; }
-  #btnBudget, #btnCategorie { background-color: #6c757d; color:white; }
-  #btnSaldo { background-color: #339cff; color:white; }
+  #btnInput { background-color: #c92a2a; color: white; }
+  #btnDettaglio { background-color: #d9a620; color: #222; }
+  #btnBudget, #btnCategorie { background-color: #6c757d; color: white; }
+  #btnSaldo { background-color: #339cff; color: white; }
   section {
     display: none;
     padding: 20px;
@@ -104,6 +104,7 @@
     width: 100%;
     border-collapse: collapse;
     margin-top: 16px;
+    user-select: none;
   }
   th, td {
     border: 1px solid #ddd;
@@ -115,6 +116,7 @@
   th {
     background-color: #eee;
     font-weight: bold;
+    user-select: text;
   }
   option.essenziale {
     background-color: #ffe5e5 !important;
@@ -168,6 +170,13 @@
   }
   #newCatForm {
     margin-bottom: 20px;
+  }
+  tr.month-header td {
+    background-color: #bdd7ee;
+    font-weight: bold;
+    text-align: left;
+    padding-left: 10px;
+    font-size: 1.1em;
   }
 </style>
 </head>
@@ -282,257 +291,275 @@
 </section>
 
 <script>
-const startCategories = {
-  Uscita: [
-    "TRASPORTI",
-    "AFFITTO",
-    "UTENZE",
-    "SPESA E ALIMENTARI",
-    "CURA PERSONALE",
-    "SPESE MEDICHE",
-    "VESTITI ESSENZIALI",
-    "COSE DELLA CASA",
-    "SPESE SCOLASTICHE",
-    "RISTORANTE",
-    "VACANZA",
-    "REGALI",
-    "ALTRO EXTRA",
-    "USCITE",
-    "SIGARETTE"
-  ],
-  Entrata: [
-    "Lavoro",
-    "Mamma",
-    "Nonna",
-    "Roxana",
-    "Entrate extra",
-    "Rimborsi"
-  ]
-};
-const contiArr = ["CONTANTI", "REVOLUT", "UNICREDIT", "ISYBANK"];
+  const startCategories = {
+    Uscita: [
+      "TRASPORTI", "AFFITTO", "UTENZE", "SPESA E ALIMENTARI", "CURA PERSONALE",
+      "SPESE MEDICHE", "VESTITI ESSENZIALI", "COSE DELLA CASA", "SPESE SCOLASTICHE",
+      "RISTORANTE", "VACANZA", "REGALI", "ALTRO EXTRA", "USCITE", "SIGARETTE"
+    ],
+    Entrata: [
+      "Lavoro", "Mamma", "Nonna", "Roxana", "Entrate extra", "Rimborsi"
+    ]
+  };
+  const contiArr = ["CONTANTI", "REVOLUT", "UNICREDIT", "ISYBANK"];
 
-function showTab(tab) {
-  document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
-  document.querySelectorAll('section').forEach(sec => sec.classList.remove('active'));
-  document.getElementById('btn' + tab).classList.add('active');
-  document.getElementById('tab' + tab).classList.add('active');
-  if(tab === "Saldo") calcSaldo();
-  else if(tab === "Dettaglio") loadDettaglio();
-  else if(tab === "Budget") loadBudget();
-  else if(tab === "Categorie") renderCategorie();
-}
-
-document.getElementById('btnInput').onclick = () => showTab('Input');
-document.getElementById('btnDettaglio').onclick = () => showTab('Dettaglio');
-document.getElementById('btnBudget').onclick = () => showTab('Budget');
-document.getElementById('btnCategorie').onclick = () => showTab('Categorie');
-document.getElementById('btnSaldo').onclick = () => showTab('Saldo');
-
-function loadCategories() {
-  let cats = JSON.parse(localStorage.getItem('categorie') || "null");
-  return cats || JSON.parse(JSON.stringify(startCategories));
-}
-function saveCategories(cats) {
-  localStorage.setItem('categorie', JSON.stringify(cats));
-}
-function setCategoryOptions(tipo) {
-  let select = document.getElementById('categoria');
-  select.innerHTML = '<option value="">Seleziona categoria</option>';
-  loadCategories()[tipo].forEach(c => {
-    const opt = document.createElement('option');
-    opt.value = c;
-    opt.textContent = c;
-    if(startCategories.Uscita.includes(c)){
-      opt.style.backgroundColor="#ffe5e5"; // rosso chiaro
-      opt.style.color="#b20000";
-    }
-    if(startCategories.Entrata.includes(c)) {
-      opt.style.backgroundColor = "#eaffea"; // verde
-      opt.style.color = "#067e15";
-    }
-    if(["RISTORANTE","VACANZA","REGALI","ALTRO EXTRA","USCITE","SIGARETTE"].includes(c)){
-      opt.style.backgroundColor = "#fff9e3"; // giallo extra
-      opt.style.color = "#b38800";
-    }
-    select.appendChild(opt);
-  });
-}
-document.getElementById('tipo').addEventListener('change', function(){
-  setCategoryOptions(this.value);
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('data').value = new Date().toISOString().split('T')[0];
-  if(!localStorage.getItem('categorie')) saveCategories(startCategories);
-  setCategoryOptions('Uscita');
-  document.getElementById('fonte').value = "CONTANTI";
-  loadDettaglio();
-  calcSaldo();
-  loadBudget();
-  renderCategorie();
-});
-
-document.getElementById('movForm').onsubmit = function(e) {
-  e.preventDefault();
-  let tipo = document.getElementById('tipo').value;
-  let fonte = document.getElementById('fonte').value;
-  let data = document.getElementById('data').value;
-  let euro = parseFloat(document.getElementById('euro').value);
-  let descrizione = document.getElementById('descrizione').value || "";
-  let categoria = document.getElementById('categoria').value;
-  let dt = new Date(data);
-  let mese = dt.toLocaleString("it-IT", {month: "long"});
-  let anno = dt.getFullYear();
-
-  let movimenti = JSON.parse(localStorage.getItem('movimenti') || "[]");
-  movimenti.push({tipo, fonte, data, mese, anno, euro, descrizione, categoria});
-  localStorage.setItem('movimenti', JSON.stringify(movimenti));
-  loadDettaglio();
-  calcSaldo();
-
-  this.reset();
-  document.getElementById('tipo').value = "Uscita";
-  setCategoryOptions("Uscita");
-  document.getElementById('fonte').value = "CONTANTI";
-  document.getElementById('data').value = new Date().toISOString().split('T')[0];
-  
-  alert("Movimento inserito!");
-  loadBudget();
-};
-
-function loadDettaglio() {
-  let tbody = document.querySelector('#dettaglioTable tbody');
-  tbody.innerHTML = "";
-  let movimenti = JSON.parse(localStorage.getItem('movimenti') || "[]");
-  movimenti.forEach((m, idx) => {
-    let tr = document.createElement("tr");
-    let classe = "";
-    if (startCategories.Uscita.includes(m.categoria)) classe = 'essenziale';
-    else if (startCategories.Entrata.includes(m.categoria)) classe = 'entrata';
-    else if (["RISTORANTE","VACANZA","REGALI","ALTRO EXTRA","USCITE","SIGARETTE"].includes(m.categoria)) classe = 'extra';
-
-    tr.className = classe;
-    tr.innerHTML = `
-      <td>${m.tipo}</td>
-      <td>${m.fonte}</td>
-      <td>${m.data}</td>
-      <td>${m.mese}</td>
-      <td>${m.anno}</td>
-      <td>€ ${m.euro.toFixed(2)}</td>
-      <td>${m.descrizione}</td>
-      <td>${m.categoria}</td>
-      <td><button class="del-btn" aria-label="Elimina movimento" data-idx="${idx}">Elimina</button></td>
-    `;
-    tbody.appendChild(tr);
-  });
-  tbody.querySelectorAll('.del-btn').forEach(btn => {
-    btn.onclick = function() {
-      let idx = parseInt(this.dataset.idx);
-      let movimenti = JSON.parse(localStorage.getItem('movimenti') || "[]");
-      movimenti.splice(idx,1);
-      localStorage.setItem('movimenti', JSON.stringify(movimenti));
-      loadDettaglio();
-      calcSaldo();
-      loadBudget();
-    };
-  });
-}
-
-function calcSaldo() {
-  let movimenti = JSON.parse(localStorage.getItem('movimenti') || "[]");
-  let saldi = {CONTANTI: 0, REVOLUT: 0, UNICREDIT: 0, ISYBANK: 0};
-  movimenti.forEach(m => {
-    if(contiArr.includes(m.fonte)) {
-      if(m.tipo === "Entrata") saldi[m.fonte] += m.euro;
-      else saldi[m.fonte] -= m.euro;
-    }
-  });
-  document.getElementById('saldoTotaleBar').textContent = "Saldo totale: €" + (saldi.CONTANTI + saldi.REVOLUT + saldi.UNICREDIT + saldi.ISYBANK).toFixed(2);
-  document.getElementById('saldoContanti').textContent = "Contanti: €" + saldi.CONTANTI.toFixed(2);
-  document.getElementById('saldoRevolut').textContent = "Revolut: €" + saldi.REVOLUT.toFixed(2);
-  document.getElementById('saldoUnicredit').textContent = "Unicredit: €" + saldi.UNICREDIT.toFixed(2);
-  document.getElementById('saldoIsybank').textContent = "Isybank: €" + saldi.ISYBANK.toFixed(2);
-}
-
-function loadBudget() {
-  let budgetMonthStorage = localStorage.getItem('budgetMonth') || "";
-  let budgetTextStorage = localStorage.getItem('budgetText') || "Inserisci qui il budget...";
-  let budgetLastMod = localStorage.getItem('budgetDate');
-  document.getElementById('budgetMonth').value = budgetMonthStorage;
-  document.getElementById('budgetText').value = budgetTextStorage;
-  if(budgetLastMod) {
-    document.getElementById('budgetLastMod').textContent = "Ultima modifica: " + new Date(budgetLastMod).toLocaleString();
-  } else {
-    document.getElementById('budgetLastMod').textContent = "Nessuna modifica salvata";
+  function showTab(tab) {
+    document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('section').forEach(sec => sec.classList.remove('active'));
+    document.getElementById('btn' + tab).classList.add('active');
+    document.getElementById('tab' + tab).classList.add('active');
+    if(tab === "Saldo") calcSaldo();
+    else if(tab === "Dettaglio") loadDettaglio();
+    else if(tab === "Budget") loadBudget();
+    else if(tab === "Categorie") renderCategorie();
   }
-}
 
-document.getElementById('saveBudgetBtn').onclick = function() {
-  let budgetText = document.getElementById('budgetText').value;
-  let budgetMonth = document.getElementById('budgetMonth').value;
-  localStorage.setItem('budgetText', budgetText);
-  localStorage.setItem('budgetMonth', budgetMonth);
-  localStorage.setItem('budgetDate', (new Date()).toISOString());
-  alert('Budget salvato!');
-  loadBudget();
-};
+  document.getElementById('btnInput').onclick = () => showTab('Input');
+  document.getElementById('btnDettaglio').onclick = () => showTab('Dettaglio');
+  document.getElementById('btnBudget').onclick = () => showTab('Budget');
+  document.getElementById('btnCategorie').onclick = () => showTab('Categorie');
+  document.getElementById('btnSaldo').onclick = () => showTab('Saldo');
 
-function renderCategorie() {
-  const tbody = document.getElementById('catTabBody');
-  tbody.innerHTML = "";
-  const cats = loadCategories();
-  ['Uscita', 'Entrata'].forEach(tipo => {
-    cats[tipo].forEach((cat, idx) => {
-      const tr = document.createElement('tr');
-      let bgColor = '';
-      let fgColor = '';
-      if (startCategories.Uscita.includes(cat)) { bgColor = '#ffe5e5'; fgColor = '#b20000'; }
-      else if (startCategories.Entrata.includes(cat)) { bgColor = '#eaffea'; fgColor = '#067e15'; }
-      if (['RISTORANTE','VACANZA','REGALI','ALTRO EXTRA','USCITE','SIGARETTE'].includes(cat)){ bgColor = '#fff9e3'; fgColor = '#b38800'; }
-      tr.style.backgroundColor = bgColor;
-      tr.style.color = fgColor;
-
-      tr.innerHTML = `
-        <td>${tipo}</td>
-        <td>${cat}</td>
-        <td><button class="del-btn" title="Elimina categoria" data-tipo="${tipo}" data-index="${idx}">Elimina</button></td>
-      `;
-      tbody.appendChild(tr);
+  function loadCategories() {
+    let cats = JSON.parse(localStorage.getItem('categorie') || "null");
+    return cats || JSON.parse(JSON.stringify(startCategories));
+  }
+  function saveCategories(cats) {
+    localStorage.setItem('categorie', JSON.stringify(cats));
+  }
+  function setCategoryOptions(tipo) {
+    let select = document.getElementById('categoria');
+    select.innerHTML = '<option value="">Seleziona categoria</option>';
+    loadCategories()[tipo].forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c;
+      opt.textContent = c;
+      if (startCategories.Uscita.includes(c)) {
+        opt.style.backgroundColor = "#ffe5e5"; /* rosso chiaro */
+        opt.style.color = "#b20000";
+      }
+      if (startCategories.Entrata.includes(c)) {
+        opt.style.backgroundColor = "#eaffea"; /* verde */
+        opt.style.color = "#067e15";
+      }
+      if (["RISTORANTE","VACANZA","REGALI","ALTRO EXTRA","USCITE","SIGARETTE"].includes(c)) {
+        opt.style.backgroundColor = "#fff9e3"; /* giallo */
+        opt.style.color = "#b38800";
+      }
+      select.appendChild(opt);
     });
+  }
+  document.getElementById('tipo').addEventListener('change', function() {
+    setCategoryOptions(this.value);
   });
-  tbody.querySelectorAll('.del-btn').forEach(btn => {
-    btn.onclick = function() {
-      const tipo = this.dataset.tipo;
-      const idx = parseInt(this.dataset.index);
-      const cats = loadCategories();
-      cats[tipo].splice(idx,1);
-      saveCategories(cats);
-      renderCategorie();
-      setCategoryOptions(document.getElementById('tipo').value);
-    };
-  });
-}
 
-document.getElementById('newCatForm').onsubmit = function(e){
-  e.preventDefault();
-  let nuovaCat = document.getElementById('nuovaCat').value.trim();
-  let tipo = document.getElementById('catTipo').value;
-  if(!nuovaCat){
-    alert('Inserisci il nome della categoria');
-    return;
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('data').value = new Date().toISOString().split('T')[0];
+    if(!localStorage.getItem('categorie')) saveCategories(startCategories);
+    setCategoryOptions("Uscita");
+    document.getElementById('fonte').value = "CONTANTI";
+    loadDettaglio();
+    calcSaldo();
+    loadBudget();
+    renderCategorie();
+  });
+
+  document.getElementById('movForm').onsubmit = function(e) {
+    e.preventDefault();
+    let tipo = document.getElementById('tipo').value;
+    let fonte = document.getElementById('fonte').value;
+    let data = document.getElementById('data').value;
+    let euro = parseFloat(document.getElementById('euro').value);
+    let descrizione = document.getElementById('descrizione').value || "";
+    let categoria = document.getElementById('categoria').value;
+    let dt = new Date(data);
+    let mese = dt.toLocaleString("it-IT", {month: "long"});
+    let anno = dt.getFullYear();
+
+    let movimenti = JSON.parse(localStorage.getItem('movimenti') || "[]");
+    movimenti.push({tipo, fonte, data, mese, anno, euro, descrizione, categoria});
+    localStorage.setItem('movimenti', JSON.stringify(movimenti));
+    loadDettaglio();
+    calcSaldo();
+
+    this.reset();
+    document.getElementById('tipo').value = "Uscita";
+    setCategoryOptions("Uscita");
+    document.getElementById('fonte').value = "CONTANTI";
+    document.getElementById('data').value = new Date().toISOString().split('T')[0];
+    alert("Movimento inserito!");
+    loadBudget();
+  };
+
+  // Caricamento dettaglio movimenti raggruppati per mese/anno
+  function loadDettaglio() {
+    const tbody = document.querySelector('#dettaglioTable tbody');
+    tbody.innerHTML = '';
+    const movimenti = JSON.parse(localStorage.getItem('movimenti') || "[]");
+    if(movimenti.length === 0) return;
+
+    // Raggruppa per anno-mese
+    const gruppi = {};
+    movimenti.forEach(m => {
+      const chiave = m.anno + '-' + m.mese.toLowerCase(); // es "2025-agosto"
+      if(!gruppi[chiave]) gruppi[chiave] = [];
+      gruppi[chiave].push(m);
+    });
+
+    // Ordina chiavi per data (cronologica)
+    const chiaviOrdinate = Object.keys(gruppi).sort((a,b) => {
+      const [yearA, monthA] = a.split('-');
+      const [yearB, monthB] = b.split('-');
+      const dataA = new Date(yearA, meseITtoNumero(monthA) - 1);
+      const dataB = new Date(yearB, meseITtoNumero(monthB) -1 );
+      return dataA - dataB;
+    });
+
+    // Costruisci tabella raggruppata
+    chiaviOrdinate.forEach(chiave => {
+      const [anno, mese] = chiave.split('-').reverse();
+      const trHeader = document.createElement('tr');
+      trHeader.className = 'month-header';
+      trHeader.innerHTML = `<td colspan="9">${capitalize(mese)} ${anno}</td>`;
+      tbody.appendChild(trHeader);
+
+      gruppi[chiave].forEach(m => {
+        let tr = document.createElement('tr');
+        let classe = '';
+        if (startCategories.Uscita.includes(m.categoria)) classe = 'essenziale';
+        else if (startCategories.Entrata.includes(m.categoria)) classe = 'entrata';
+        else if (["RISTORANTE","VACANZA","REGALI","ALTRO EXTRA","USCITE","SIGARETTE"].includes(m.categoria)) classe = 'extra';
+        tr.className = classe;
+        tr.innerHTML = `
+          <td>${m.tipo}</td>
+          <td>${m.fonte}</td>
+          <td>${m.data}</td>
+          <td>${m.mese}</td>
+          <td>${m.anno}</td>
+          <td>€ ${m.euro.toFixed(2)}</td>
+          <td>${m.descrizione}</td>
+          <td>${m.categoria}</td>
+          <td><button class="del-btn" aria-label="Elimina movimento">Elimina</button></td>
+        `;
+        tbody.appendChild(tr);
+        // Listener delete singolo
+        tr.querySelector('button.del-btn').onclick = () => {
+          const i = movimenti.indexOf(m);
+          if (i > -1) {
+            movimenti.splice(i, 1);
+            localStorage.setItem('movimenti', JSON.stringify(movimenti));
+            loadDettaglio();
+            calcSaldo();
+            loadBudget();
+          }
+        };
+      });
+    });
   }
-  let cats = loadCategories();
-  if(cats[tipo].includes(nuovaCat)){
-    alert('Categoria già esistente');
-    return;
+
+  // HELPERS
+  function meseITtoNumero(nomeMese) {
+    const mesi = {gennaio:1,febbraio:2,marzo:3,aprile:4,maggio:5,giugno:6,luglio:7,agosto:8,settembre:9,ottobre:10,novembre:11,dicembre:12};
+    return mesi[nomeMese.toLowerCase()] || 0;
   }
-  cats[tipo].push(nuovaCat);
-  saveCategories(cats);
-  renderCategorie();
-  setCategoryOptions(document.getElementById('tipo').value);
-  document.getElementById('nuovaCat').value='';
-  alert('Categoria aggiunta!');
-};
+  function capitalize(str) {
+    if(!str) return '';
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  function calcSaldo() {
+    let movimenti = JSON.parse(localStorage.getItem('movimenti') || "[]");
+    let saldi = {CONTANTI: 0, REVOLUT: 0, UNICREDIT: 0, ISYBANK: 0};
+    movimenti.forEach(m => {
+      if(contiArr.includes(m.fonte)) {
+        if(m.tipo === "Entrata") saldi[m.fonte] += m.euro;
+        else saldi[m.fonte] -= m.euro;
+      }
+    });
+    document.getElementById('saldoTotaleBar').textContent = "Saldo totale: €" + (saldi.CONTANTI + saldi.REVOLUT + saldi.UNICREDIT + saldi.ISYBANK).toFixed(2);
+    document.getElementById('saldoContanti').textContent = "Contanti: €" + saldi.CONTANTI.toFixed(2);
+    document.getElementById('saldoRevolut').textContent = "Revolut: €" + saldi.REVOLUT.toFixed(2);
+    document.getElementById('saldoUnicredit').textContent = "Unicredit: €" + saldi.UNICREDIT.toFixed(2);
+    document.getElementById('saldoIsybank').textContent = "Isybank: €" + saldi.ISYBANK.toFixed(2);
+  }
+
+  function loadBudget() {
+    let budgetMonthStorage = localStorage.getItem('budgetMonth') || "";
+    let budgetTextStorage = localStorage.getItem('budgetText') || "Inserisci qui il budget...";
+    let budgetLastMod = localStorage.getItem('budgetDate');
+    document.getElementById('budgetMonth').value = budgetMonthStorage;
+    document.getElementById('budgetText').value = budgetTextStorage;
+    if(budgetLastMod) {
+      document.getElementById('budgetLastMod').textContent = "Ultima modifica: " + new Date(budgetLastMod).toLocaleString();
+    } else {
+      document.getElementById('budgetLastMod').textContent = "Nessuna modifica salvata";
+    }
+  }
+  document.getElementById('saveBudgetBtn').onclick = function() {
+    let budgetText = document.getElementById('budgetText').value;
+    let budgetMonth = document.getElementById('budgetMonth').value;
+    localStorage.setItem('budgetText', budgetText);
+    localStorage.setItem('budgetMonth', budgetMonth);
+    localStorage.setItem('budgetDate', (new Date()).toISOString());
+    alert('Budget salvato!');
+    loadBudget();
+  };
+
+  function renderCategorie() {
+    const tbody = document.getElementById('catTabBody');
+    tbody.innerHTML = "";
+    const cats = loadCategories();
+    ['Uscita', 'Entrata'].forEach(tipo => {
+      cats[tipo].forEach((cat, idx) => {
+        const tr = document.createElement('tr');
+        let bgColor = '';
+        let fgColor = '';
+        if (startCategories.Uscita.includes(cat)) { bgColor = '#ffe5e5'; fgColor = '#b20000'; }
+        else if (startCategories.Entrata.includes(cat)) { bgColor = '#eaffea'; fgColor = '#067e15'; }
+        if (['RISTORANTE', 'VACANZA', 'REGALI', 'ALTRO EXTRA', 'USCITE', 'SIGARETTE'].includes(cat)){ bgColor = '#fff9e3'; fgColor = '#b38800'; }
+        tr.style.backgroundColor = bgColor;
+        tr.style.color = fgColor;
+        tr.innerHTML = `
+          <td>${tipo}</td>
+          <td>${cat}</td>
+          <td><button class="del-btn" title="Elimina categoria" data-tipo="${tipo}" data-index="${idx}">Elimina</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    });
+    tbody.querySelectorAll('.del-btn').forEach(btn => {
+      btn.onclick = function() {
+        const tipo = this.dataset.tipo;
+        const idx = parseInt(this.dataset.index);
+        const cats = loadCategories();
+        cats[tipo].splice(idx, 1);
+        saveCategories(cats);
+        renderCategorie();
+        setCategoryOptions(document.getElementById('tipo').value);
+      };
+    });
+  }
+
+  document.getElementById('newCatForm').onsubmit = function(e){
+    e.preventDefault();
+    let nuovaCat = document.getElementById('nuovaCat').value.trim();
+    let tipo = document.getElementById('catTipo').value;
+    if (!nuovaCat) {
+      alert('Inserisci il nome della categoria');
+      return;
+    }
+    let cats = loadCategories();
+    if (cats[tipo].includes(nuovaCat)) {
+      alert('Categoria già esistente');
+      return;
+    }
+    cats[tipo].push(nuovaCat);
+    saveCategories(cats);
+    renderCategorie();
+    setCategoryOptions(document.getElementById('tipo').value);
+    document.getElementById('nuovaCat').value = '';
+    alert('Categoria aggiunta!');
+  };
 </script>
 </body>
 </html>
