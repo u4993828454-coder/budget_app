@@ -2,195 +2,308 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8" />
-<title>Budget Personale con Gestione Avanzata</title>
+<title>Bilancio Personale Completo</title>
 <style>
-  /* (Qui usarebbe lo stesso css della versione precedente, con eventuale piccola aggiunta per modale o area modifica budget) */
-  body { font-family: Arial, sans-serif; max-width: 1000px; margin: 20px auto; background: #f7f7f7; }
-  #saldoBar { ... } /* come saldoBar prima */
-  /* aggiungere styling per modale budget edit */
-  #budgetEditModal {
-    position: fixed; top: 0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.5);
-    display:none; justify-content:center; align-items:center; z-index: 1000;
+  body {
+    font-family: Arial, sans-serif;
+    max-width: 1000px;
+    margin: 20px auto;
+    background: #f7f7f7;
   }
-  #budgetEditContent {
-    background: white; padding:20px; border-radius:8px; width: 80%; max-width: 600px;
+  h1 {
+    text-align: center;
+    margin-bottom: 5px;
   }
-  #budgetEditContent textarea, #budgetEditContent input {
-    width: 100%; margin-bottom: 10px; font-family: monospace; font-size: 14px;
-    resize: vertical; height: 150px;
+  #saldoTotaleBar {
+    position: sticky;
+    top: 0;
+    background: #339cff;
+    color: white;
+    font-weight: bold;
+    padding: 15px;
+    font-size: 1.3em;
+    text-align: center;
+    border-radius: 0 0 8px 8px;
+    margin-bottom: 18px;
+    z-index: 1000;
   }
-  #budgetEditContent button { margin-right: 10px; }
+  nav {
+    margin: 20px 0;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  nav button {
+    padding: 10px 25px;
+    font-size: 1.1em;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    user-select: none;
+    transition: filter 0.3s ease;
+  }
+  nav button.active,
+  nav button:hover {
+    filter: brightness(0.85);
+  }
+  #btnInput { background-color: #c92a2a; color: white; }
+  #btnDettaglio { background-color: #d9a620; color: #222; }
+  #btnBudget, #btnCategorie { background-color: #6c757d; color: white; }
+  #btnSaldo { background-color: #339cff; color: white; }
+  section {
+    display: none;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 1px 2px 8px #bbb;
+    min-height: 320px;
+    transition: opacity 0.3s ease;
+  }
+  section.active {
+    display: block;
+    opacity: 1;
+  }
+  label {
+    font-weight: bold;
+    margin-top: 12px;
+    display: block;
+  }
+  select, input, button, textarea {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 1em;
+    font-family: inherit;
+    resize: vertical;
+  }
+  button[type='submit'], button.del-btn {
+    margin-top: 20px;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+    font-weight: bold;
+    padding: 10px;
+    user-select: none;
+  }
+  button[type='submit'] {
+    background-color: #6c757d;
+    color: white;
+  }
+  button[type='submit']:hover, button.del-btn:hover {
+    filter: brightness(0.85);
+  }
+  button.del-btn {
+    background-color: #c92a2a;
+    color: white;
+    padding: 6px 14px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+    user-select: none;
+  }
+  th, td {
+    border: 1px solid #ddd;
+    padding: 6px;
+    text-align: center;
+    vertical-align: middle;
+    user-select: text;
+  }
+  th {
+    background-color: #eee;
+    font-weight: bold;
+    user-select: text;
+  }
+  option.essenziale {
+    background-color: #ffe5e5 !important;
+    color: #b20000 !important;
+    font-weight: bold;
+  }
+  option.extra {
+    background-color: #fff9e3 !important;
+    color: #b38800 !important;
+    font-weight: bold;
+  }
+  option.entrata {
+    background-color: #eaffea !important;
+    color: #067e15 !important;
+    font-weight: bold;
+  }
+  tr.essenziale td {
+    background-color: #fff2f2;
+    color: #a10000;
+  }
+  tr.extra td {
+    background-color: #fffbe6;
+    color: #a67c00;
+  }
+  tr.entrata td {
+    background-color: #e7f9e7;
+    color: #056605;
+  }
+  #budgetTable {
+    margin-top: 10px;
+  }
+  #budgetTable td, #budgetTable th {
+    padding: 8px;
+    border: 1px solid #ddd;
+  }
+  #budgetTable thead th {
+    background: #eee;
+  }
+  .month-header td {
+    background-color: #bdd7ee;
+    font-weight: bold;
+    text-align: left;
+    padding-left: 10px;
+    font-size: 1.1em;
+  }
+  #budgetMonth {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 1em;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  #newCatForm {
+    margin-bottom: 20px;
+  }
 </style>
 </head>
 <body>
 
-<div id="saldoBar" aria-live="polite">Saldo totale: €0.00</div>
-<nav>
-  <!-- Bottoni uguali -->
+<h1>Bilancio Personale</h1>
+<div id="saldoTotaleBar" aria-live="polite" role="region" aria-label="Saldo totale">Saldo totale: €0.00</div>
+
+<nav aria-label="Navigazione">
+  <button id="btnInput" class="active" title="Inserimento nuovo movimento">Input</button>
+  <button id="btnDettaglio" title="Elenco dettagliato movimenti">Dettaglio</button>
+  <button id="btnBudget" title="Visualizza e modifica Budget">Budget</button>
+  <button id="btnCategorie" title="Gestione categorie">Categorie</button>
+  <button id="btnSaldo" title="Saldo conti">Saldo</button>
 </nav>
 
-<!-- ALTRE SEZIONI COME PRIMA -->
+<section id="tabInput" class="active" aria-label="Inserimento nuovo movimento">
+  <h2>Nuovo Movimento</h2>
+  <form id="movForm">
+    <label for="tipo">Tipo<span style="color:#b20000;">*</span></label>
+    <select id="tipo" required aria-required="true" title="Tipo di movimento">
+      <option value="Uscita" selected>Uscita</option>
+      <option value="Entrata">Entrata</option>
+    </select>
 
-<section id="tabBudget" aria-label="Budget">
-  <h2>Budget</h2>
-  <p id="budgetMonthDisplay"></p>
-  <div>
-    <button id="btnEditBudget">Modifica Budget</button>
-  </div>
-  
-  <table id="budgetTable" border="1" style="width:100%; margin-top:10px;">
+    <label for="fonte">Fonte<span style="color:#b20000;">*</span></label>
+    <select id="fonte" required aria-required="true" title="Fonte contabile">
+      <option value="CONTANTI" class="essenziale" selected>CONTANTI</option>
+      <option value="REVOLUT" class="essenziale">REVOLUT</option>
+      <option value="UNICREDIT" class="essenziale">UNICREDIT</option>
+      <option value="ISYBANK" class="essenziale">ISYBANK</option>
+      <option value="BANCO SANTANDER" class="essenziale">BANCO SANTANDER</option>
+    </select>
+
+    <label for="data">Data<span style="color:#b20000;">*</span></label>
+    <input type="date" id="data" required aria-required="true" title="Data del movimento" />
+
+    <label for="euro">Importo (€)<span style="color:#b20000;">*</span></label>
+    <input type="number" id="euro" min="0" step="0.01" required aria-required="true" title="Importo in euro" />
+
+    <label for="descrizione">Descrizione (opzionale)</label>
+    <input type="text" id="descrizione" placeholder="Descrizione (facoltativa)" aria-required="false" />
+
+    <label for="categoria">Categoria<span style="color:#b20000;">*</span></label>
+    <select id="categoria" required aria-required="true" title="Seleziona categoria"></select>
+
+    <button type="submit">Aggiungi</button>
+  </form>
+</section>
+
+<section id="tabDettaglio" aria-label="Dettaglio movimenti">
+  <h2>Dettaglio Movimenti</h2>
+  <table id="dettaglioTable" aria-describedby="dettaglioDescr" role="grid">
     <thead>
       <tr>
-        <th>Categoria</th><th>Budget Iniziale (€)</th><th>Spese (€)</th><th>Rimanente (€)</th>
+        <th>Tipo</th>
+        <th>Fonte</th>
+        <th>Data</th>
+        <th>Mese</th>
+        <th>Anno</th>
+        <th>Euro</th>
+        <th>Descrizione</th>
+        <th>Categoria</th>
+        <th>Azioni</th>
       </tr>
     </thead>
-    <tbody>
-      <!-- Generato dinamicamente -->
-    </tbody>
+    <tbody></tbody>
+  </table>
+  <p id="dettaglioDescr" hidden>Movimenti divisi per mese. Puoi eliminarli direttamente.</p>
+</section>
+
+<section id="tabBudget" aria-label="Budget Categoria per Mese">
+  <h2>Budget per Categoria e Mese</h2>
+  <label for="budgetMonth">Seleziona il mese (es: agosto 2025):</label>
+  <input type="text" id="budgetMonth" placeholder="es. agosto 2025" />
+  <button id="updateBudgetView" style="margin-top:10px; background:#6c757d; color:#fff; border:none; padding:10px 15px; border-radius:6px; cursor:pointer;">Visualizza Budget</button>
+
+  <div id="budgetEditContainer" style="margin-top: 15px;">
+    <h3>Modifica Budget</h3>
+    <form id="budgetEditForm">
+      <table id="budgetTable" style="width:100%; border-collapse: collapse;">
+        <thead>
+          <tr><th>Categoria</th><th>Budget (€)</th></tr>
+        </thead>
+        <tbody>
+          <!-- Popolato dinamicamente -->
+        </tbody>
+      </table>
+      <button type="submit" style="margin-top:10px; background:#6c757d; color:#fff; border:none; padding:10px 15px; border-radius:6px; cursor:pointer;">Salva Budget</button>
+    </form>
+  </div>
+</section>
+
+<section id="tabCategorie" aria-label="Gestione categorie">
+  <h2>Gestione Categorie</h2>
+  <form id="newCatForm">
+    <label for="nuovaCat">Nuova categoria<span style="color:#b20000;">*</span></label>
+    <input type="text" id="nuovaCat" aria-required="true" />
+    <label for="catTipo">Tipo<span style="color:#b20000;">*</span></label>
+    <select id="catTipo" aria-required="true">
+      <option value="Uscita">Uscita</option>
+      <option value="Entrata">Entrata</option>
+    </select>
+    <button type="submit" style="background:#6c757d;color:#fff;">Aggiungi</button>
+  </form>
+  <table id="catTable" aria-label="Tabella categorie" style="width:100%; border-collapse:collapse;">
+    <thead><tr><th>Tipo</th><th>Categoria</th><th>Azioni</th></tr></thead>
+    <tbody id="catTabBody"></tbody>
   </table>
 </section>
 
-<div id="budgetEditModal" role="dialog" aria-modal="true" aria-labelledby="budgetEditTitle">
-  <div id="budgetEditContent">
-    <h3 id="budgetEditTitle">Modifica Budget per Mese</h3>
-    <label for="editBudgetMonth">Mese (es: agosto 2025):</label>
-    <input type="text" id="editBudgetMonth" />
-    <label for="editBudgetText">Budget JSON (forma: {"categoria": importo, ...} ):</label>
-    <textarea id="editBudgetText"></textarea>
-    <br />
-    <button id="saveBudgetEdit">Salva</button>
-    <button id="cancelBudgetEdit">Annulla</button>
+<section id="tabSaldo" aria-label="Saldo Conti">
+  <h2>Saldo Conti</h2>
+  <div style="display:flex; gap:20px; flex-wrap: wrap;">
+    <div class="saldo-box" style="background:#ffe5e5; color:#b20000; padding:15px; border-radius:7px; font-weight:bold; min-width:140px;" id="saldoContanti">Contanti: €0.00</div>
+    <div class="saldo-box" style="background:#fff9e3; color:#a97400; padding:15px; border-radius:7px; font-weight:bold; min-width:140px;" id="saldoRevolut">Revolut: €0.00</div>
+    <div class="saldo-box" style="background:#fff9e3; color:#a97400; padding:15px; border-radius:7px; font-weight:bold; min-width:140px;" id="saldoUnicredit">Unicredit: €0.00</div>
+    <div class="saldo-box" style="background:#fff9e3; color:#a97400; padding:15px; border-radius:7px; font-weight:bold; min-width:140px;" id="saldoIsybank">Isybank: €0.00</div>
+    <div class="saldo-box" style="background:#fff9e3; color:#a97400; padding:15px; border-radius:7px; font-weight:bold; min-width:140px;" id="saldoSantander">Banco Santander: €0.00</div>
   </div>
-</div>
+</section>
 
 <script>
-const budgetKeyPrefix = "budget_"; // per ogni mese un key tipo "budget_agosto2025"
-const currentMonthFormatted = new Date().toLocaleDateString("it-IT",{year:"numeric",month:"long"});
-// esempio: "agosto 2025"
+  const startCategories = {
+    Uscita: ["TRASPORTI", "AFFITTO", "UTENZE", "SPESA E ALIMENTARI", "CURA PERSONALE", "SPESE MEDICHE", "VESTITI ESSENZIALI", "COSE DELLA CASA", "SPESE SCOLASTICHE", "RISTORANTE", "VACANZA", "REGALI", "ALTRO EXTRA", "USCITE", "SIGARETTE"],
+    Entrata: ["Lavoro", "Mamma", "Nonna", "Roxana", "Entrate extra", "Rimborsi"]
+  };
 
-document.getElementById("budgetMonthDisplay").textContent = currentMonthFormatted;
+  const contiArr = ["CONTANTI", "REVOLUT", "UNICREDIT", "ISYBANK", "BANCO SANTANDER"];
 
-document.getElementById("btnEditBudget").addEventListener("click", () => {
-  // Apri modale budget edit
-  let month = prompt("Inserisci mese per modificare (es: agosto 2025):", currentMonthFormatted);
-  if(!month) return;
-  month = month.trim().toLowerCase();
-
-  let currentBudget = localStorage.getItem(budgetKeyPrefix + month) || "{}";
-  document.getElementById("editBudgetMonth").value = month;
-  document.getElementById("editBudgetText").value = currentBudget;
-
-  document.getElementById("budgetEditModal").style.display = "flex";
-});
-
-// Chiudi modale
-document.getElementById("cancelBudgetEdit").addEventListener("click", () => {
-  document.getElementById("budgetEditModal").style.display = "none";
-});
-
-// Salva modale
-document.getElementById("saveBudgetEdit").addEventListener("click", () => {
-  if(confirm("Sei sicuro di salvare il budget modificato?")) {
-    let month = document.getElementById("editBudgetMonth").value.trim().toLowerCase();
-    let text = document.getElementById("editBudgetText").value.trim();
-
-    try {
-      JSON.parse(text); // verifica json valido
-    } catch(e){
-      alert("Errore: JSON non valido");
-      return;
-    }
-
-    localStorage.setItem(budgetKeyPrefix + month, text);
-    localStorage.setItem("budgetLastModified", new Date().toISOString());
-    alert("Budget salvato per " + month);
-    document.getElementById("budgetEditModal").style.display = "none";
-    loadBudget();
-  }
-});
-
-function loadBudget(){
-  let month = document.getElementById("budgetMonth").value || currentMonthFormatted;
-  month = month.trim().toLowerCase();
-  document.getElementById("budgetMonth").value = month;
-  
-  let budgetJSON = localStorage.getItem(budgetKeyPrefix + month) || "{}";
-  let budgetData;
-  try {
-    budgetData = JSON.parse(budgetJSON);
-  } catch(e) {
-    budgetData = {};
-  }
-  document.getElementById("budgetText").value = JSON.stringify(budgetData, null, 2);
-
-  let lastMod = localStorage.getItem("budgetLastModified");
-  if(lastMod){
-    document.getElementById("budgetMonthDisplay").textContent = "Mese: " + capitalize(month) + " - Ultima modifica: " + new Date(lastMod).toLocaleString();
-  } else {
-    document.getElementById("budgetMonthDisplay").textContent = "Mese: " + capitalize(month) + " - Nessuna modifica salvata";
-  }
-
-  updateBudgetTable(budgetData, month);
-}
-
-// Aggiorna tabella budget con spese
-function updateBudgetTable(budgetData, month){
-  const tbody = document.querySelector("#budgetTable tbody");
-  tbody.innerHTML = "";
-
-  let movs = JSON.parse(localStorage.getItem("movimenti")||"[]");
-  // Filtra movimenti per mese e anno corrispondente al mese selezionato
-  let [mesename, year] = month.split(" ");
-  year = parseInt(year);
-
-  movs = movs.filter(m => {
-    let dm = m.mese.toLowerCase();
-    let da = m.anno;
-    return dm === mesename && da === year;
-  });
-
-  // Calcola spese per categoria (solo uscite)
-  let expenseMap = {};
-  movs.forEach(m => {
-    if(m.tipo === "Uscita"){
-      expenseMap[m.categoria] = (expenseMap[m.categoria]||0) + m.euro;
-    }
-  });
-
-  for(let cat in budgetData){
-    const budg = parseFloat(budgetData[cat]) || 0;
-    const spent = expenseMap[cat] || 0;
-    const remaining = budg - spent;
-
-    // Eventuale classe colore in tabella
-    let trClass = "";
-    if (startBudgetCats.essenziali.includes(cat)) trClass = "essenziale";
-    else if (startBudgetCats.extra.includes(cat)) trClass = "extra";
-    else if (startBudgetCats.entrate.includes(cat)) trClass = "entrata";
-
-    let tr = document.createElement("tr");
-    tr.className = trClass;
-    tr.innerHTML = `
-      <td>${cat}</td>
-      <td>€ ${budg.toFixed(2)}</td>
-      <td>€ ${spent.toFixed(2)}</td>
-      <td>€ ${remaining.toFixed(2)}</td>
-    `;
-    tbody.appendChild(tr);
-  }
-}
-
-const startBudgetCats={
-  essenziali:["trasporti","affitto","utenze","spesa e alimentari","cura personale","spese mediche","vestiti essenziali","cose della casa","spese scolastiche"],
-  extra:["ristorante","vacanza","regali","altro extra","uscite","sigarette"],
-  entrate:["lavoro","mamma","nonna","roxana","entrate extra","rimborsi"]
-}
-
-function capitalize(str){
-  if(!str) return "";
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
-</script>
-
-</body></html>
-
+  function showTab(tab){
+    document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('section').forEach(sec => sec.classList.remove('active'));
+    document.getElementById('btn'+tab).classList.add('active');
